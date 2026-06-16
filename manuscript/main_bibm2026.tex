@@ -82,7 +82,7 @@ Post-onset activity is summarized by six equal temporal bins. For reservoir unit
 \begin{equation}
     b_{j,k}=\sum_{t\in\mathcal{B}_k} z_j(t),\qquad k=1,\ldots,6.
 \end{equation}
-using a post-onset window $t\in[10,70]$. This produces a \BSC{} vector that preserves coarse temporal traceability while reducing sensitivity to sample-level fluctuations. Per-electrode spike-bin features are compressed to $64$ principal components, and the electrode-level embeddings are concatenated across the $34$ channels into a trial-level reservoir representation $E_s^{(c)}\in\R^{2176}$.
+using a post-onset window $t\in[10,70]$. This produces a \BSC{} vector that preserves coarse temporal traceability while reducing sensitivity to sample-level fluctuations. Per-electrode spike-bin features are compressed to $64$ principal components, and the electrode-level embeddings are concatenated across the $34$ channels into a trial-level reservoir representation $E_s^{(c)}\in\R^{2176}$. This principal-component projection is estimated once, unsupervised and without affective labels, over the spike-bin vectors pooled across all observations and electrodes of the full cohort. Because the basis is fitted on every subject---including those later held out during validation---it is transductive with respect to subject inclusion, and we therefore report it as a fixed representation audit rather than as leakage-free preprocessing. To bound any optimism introduced by this fixed basis, we additionally evaluate a fold-local variant in which the projection is refitted on each fold's training subjects only (Sec.~\ref{sec:clean}).
 
 Fig.~\ref{fig:reservoir_dynamics} shows the reservoir-derived computational objects for the three affective conditions: the LIF spike raster, the membrane-potential response, and the $\BSC$ embedding projected to two principal components. These panels make the temporal encoding auditable: spike density and membrane dynamics are organized in post-onset time, and the projection summarizes how the binned code separates conditions at the population level.
 
@@ -142,6 +142,7 @@ The present paper isolates the reservoir temporal-encoding component. Graph-topo
 
 \section{Results}
 \subsection{Clean Subject-Level Classification}
+\label{sec:clean}
 Table~\ref{tab:clean} reports clean three-class affective condition performance for the classical baseline, the reservoir embedding, and related temporal descriptors. The reservoir embedding does not dominate the classical baseline under clean static classification. This is an important negative constraint: the reservoir should not be presented as a universal replacement for ERP features. Instead, the evidence supports evaluating it as a distinct temporal encoding with its own perturbation-response profile.
 
 \begin{table}[t]
@@ -161,6 +162,8 @@ A6 & Reservoir + descriptors $E{+}D$ & 0.478 & 0.475 \\
 \end{table}
 
 The result indicates that the reservoir embedding provides discriminative information, but the clean static task remains competitive for conventional ERP-derived features. This finding constrains the interpretation of spiking reservoirs: the reservoir acts as a nonlinear temporal measurement operator, not as an automatically superior classifier.
+
+\emph{Fold-local PCA sensitivity.} Refitting the principal-component projection on each fold's training subjects only yields balanced accuracy $0.465$, macro-F1 $0.462$, and macro one-vs-rest AUC $0.649$ for the reservoir embedding, compared with $0.463$, $0.460$, and $0.644$ for the fixed global pooled basis. The fold-local sensitivity analysis did not show evidence of optimistic inflation from the transductive PCA basis under the tested subject-grouped protocol.
 
 \subsection{Representation-Level Perturbation Response}
 Table~\ref{tab:repr_perturb} summarizes representative feature-space perturbation results. Under additive amplitude corruption, the classical bandpower baseline degrades from BA $0.485$ to $0.395$ at 5 dB. The reservoir embedding degrades more weakly, from BA $0.463$ to $0.449$. A similar pattern occurs under feature dropout, where the reservoir embedding remains close to its clean value at 30\% dropout.
