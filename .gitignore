@@ -10,3 +10,18 @@
 *.toc
 *.lof
 *.lot
+
+# Restricted data and derived artifacts (never commit)
+*.pkl
+*.pickle
+*.mat
+*.npy
+*.npz
+data/
+data_local/
+raw/
+raw_data/
+clinical/
+*_clinical*.csv
+*subject*.csv
+*SHAPE*

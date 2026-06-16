@@ -13,7 +13,7 @@
 
 \newcommand{\BSC}{\ensuremath{\mathrm{BSC}_{6}}}
 \newcommand{\R}{\mathbb{R}}
-\newcommand{\1}{\mathbf{1}}
+\newcommand{\Ind}{\mathbf{1}}
 
 \title{Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis}
 
@@ -74,7 +74,7 @@ where $\xi_t$ is the latent neural state, $H$ is a measurement operator induced 
 For each electrode trace, the signal is passed through a fixed LIF reservoir of $256$ neurons with recurrent weights $W$ (spectral radius $\rho=0.9$), input weights $W_{\mathrm{in}}$, leak parameter $\beta=0.05$, and firing threshold $\vartheta$. A compact discrete-time representation is
 \begin{align}
     v_{t+1} &= \beta v_t + W z_t + W_{\mathrm{in}}x_t - \vartheta r_t, \\
-    z_{t+1} &= \1[v_{t+1}\geq \vartheta],
+    z_{t+1} &= \Ind[v_{t+1}\geq \vartheta],
 \end{align}
 where $v_t$ is the membrane state, $z_t$ is the binary spike vector, and $r_t$ denotes reset after threshold crossing. The reservoir is fixed during feature extraction; only the downstream readout is trained.
 
