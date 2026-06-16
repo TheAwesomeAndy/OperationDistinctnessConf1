@@ -4,7 +4,7 @@ This repository contains the IEEE BIBM 2026 conference-paper carve-out from the 
 
 ## Working title
 
-**Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective ERP Signal Analysis**
+**Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis**
 
 ## Submission target
 
@@ -20,7 +20,29 @@ The repository should not contain the full integrated ARSPI-Net manuscript, grap
 
 ## Current manuscript files
 
-- `manuscript/main_bibm2026.tex` — IEEE two-column draft.
+- `manuscript/main_bibm2026.tex` — active IEEE two-column manuscript (single entry point).
+- `manuscript/main_bibm2026.pdf` — compiled output (IEEEtran, 6 pages).
+- `manuscript/IEEEtran.cls` — vendored IEEEtran V1.8b class (compile from `manuscript/`).
+- `manuscript/figures/imported/` — finished figure assets imported from the source repository.
 - `manuscript/overlap_log.md` — publication-overlap and journal-preservation log.
 - `manuscript/cover_note.md` — optional submission note.
 - `manuscript/cv_appendix_template.tex` — one-page CV appendix template required by the call.
+
+The TikZ figure sources under `manuscript/figures/*.tex` and `manuscript/main_bibm2026_v2.tex`
+are retained only as backups; the active manuscript uses the imported finished figures.
+
+## Building
+
+```
+cd manuscript
+latexmk -pdf -interaction=nonstopmode main_bibm2026.tex
+```
+
+## Imported figures
+
+| Manuscript figure | Imported asset | Source path in original repo |
+|---|---|---|
+| Fig. 1 (motivation) | `fig_overview_evidence_streams.pdf` | `figures/taffc/` |
+| Fig. 2 (reservoir objects) | `fig_reservoir_dynamics.pdf` | `figures/tcds_hardening/` |
+| Fig. 3 (perturbation response) | `ana03_robustness_degradation_curves.pdf` | `figures/tcds_ready9/analysis/` |
+| (backup, unused) | `arch_fig_pipeline_overview.pdf` | `manuscript/figures/architecture/` |
