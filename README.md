@@ -28,8 +28,8 @@ The repository should not contain the full integrated ARSPI-Net manuscript, grap
 - `manuscript/cover_note.md` — optional submission note.
 - `manuscript/cv_appendix_template.tex` — one-page CV appendix template required by the call.
 
-The TikZ figure sources under `manuscript/figures/*.tex` and `manuscript/main_bibm2026_v2.tex`
-are retained only as backups; the active manuscript uses the imported finished figures.
+The TikZ figure sources under `manuscript/figures/*.tex` are retained only as backups;
+the active manuscript uses the imported finished figures.
 
 ## Building
 
