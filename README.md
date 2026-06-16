@@ -4,7 +4,7 @@ This repository contains the IEEE BIBM 2026 conference-paper carve-out from the 
 
 ## Working title
 
-**Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective ERP Signal Analysis**
+**Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis**
 
 ## Submission target
 

@@ -2,7 +2,7 @@
 
 Dear BIBM 2026 Doctoral Forum Co-Chairs,
 
-Please consider the attached manuscript, "Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective ERP Signal Analysis," for IEEE BIBM 2026.
+Please consider the attached manuscript, "Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis," for IEEE BIBM 2026.
 
 The paper presents a student-led technical contribution in biomedical signal analysis. It evaluates a fixed spiking reservoir as a nonlinear temporal encoding operator for affective ERP observations and characterizes the resulting binned spike-count representation under subject-level validation and controlled perturbation diagnostics.
 
