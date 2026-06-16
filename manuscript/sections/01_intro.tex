@@ -1,0 +1,13 @@
+\section{Introduction}
+Electroencephalographic event-related potentials (ERPs) are time-locked measurements of neural response dynamics. In biomedical data analysis, they offer millisecond-scale temporal information but are difficult to model because the observed waveform is a noisy, low-dimensional projection of an unobserved biological dynamical system. Inter-subject variability, trial averaging, volume conduction, and measurement noise can cause endpoint classifiers to conflate temporal structure with subject-specific nuisance variation.
+
+Spiking reservoirs provide one way to construct temporally structured representations without replacing signal analysis by opaque endpoint classification. A fixed recurrent reservoir can act as a nonlinear temporal expansion of the input signal, while spike-count summaries provide discrete observables traceable to post-stimulus time windows. The central question is not whether a spiking reservoir universally outperforms classical ERP features, but which temporal information it preserves, transforms, or suppresses under perturbation.
+
+This paper studies a binned spiking reservoir encoding for affective ERP signal analysis. Each ERP observation is mapped through a fixed leaky integrate-and-fire (LIF) reservoir, summarized by six post-onset spike-count bins, and compressed into a reservoir embedding. Fig.~\ref{fig:pipeline} summarizes the pipeline. The contribution is threefold: (i) formulation of affective ERP analysis as reservoir temporal encoding; (ii) subject-level comparison against classical ERP-derived features using balanced accuracy and macro-F1; and (iii) characterization of the encoding under amplitude noise, temporal jitter, and channel dropout.
+
+\begin{figure}[t]
+\centering
+\resizebox{\linewidth}{!}{\input{figures/fig_pipeline_bibm2026.tex}}
+\caption{Reservoir temporal-encoding pipeline. The object of study is the binned spike-count representation induced by fixed LIF reservoir dynamics, not an end-to-end clinical decision model.}
+\label{fig:pipeline}
+\end{figure}
