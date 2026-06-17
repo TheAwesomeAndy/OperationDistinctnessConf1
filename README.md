@@ -21,7 +21,7 @@ The repository should not contain the full integrated ARSPI-Net manuscript, grap
 ## Current manuscript files
 
 - `manuscript/main_bibm2026.tex` — active IEEE two-column manuscript (single entry point).
-- `manuscript/main_bibm2026.pdf` — compiled output (IEEEtran, 5 pages).
+- `manuscript/main_bibm2026.pdf` — compiled output (IEEEtran, 6 pages).
 - `manuscript/IEEEtran.cls` — vendored IEEEtran V1.8b class (compile from `manuscript/`).
 - `manuscript/figures/imported/` — finished figure assets imported from the source repository.
 - `manuscript/overlap_log.md` — publication-overlap and journal-preservation log.
