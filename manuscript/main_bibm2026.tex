@@ -27,8 +27,9 @@
 \maketitle
 
 \begin{abstract}
-Electroencephalographic (EEG) event-related potentials (ERPs) provide high-temporal-resolution measurements of neural response dynamics, but their use in biomedical data analysis is limited by subject variability, low signal-to-noise ratio, and sensitivity to acquisition and preprocessing perturbations. This paper evaluates a fixed spiking reservoir as a nonlinear temporal encoding operator for affective ERP observations. Multichannel ERP traces are transformed by a leaky integrate-and-fire reservoir, summarized using six post-onset spike-count bins, and compressed into a subject-level representation for affective condition analysis. The study tests whether this binned spiking code provides a stable and auditable temporal representation under controlled perturbations, rather than claiming classifier superiority over conventional ERP features. Evaluation uses subject-grouped validation, balanced accuracy, macro-F1, classical bandpower/ERP baselines, and perturbation diagnostics involving additive amplitude noise, temporal jitter, and channel dropout. Results indicate that the reservoir embedding is not a uniformly stronger static classifier than classical ERP-derived features, but it exhibits a distinct perturbation-response profile: representation-level reservoir embeddings retain balanced accuracy under high additive noise and channel dropout more strongly than the classical bandpower baseline, while recomputation from corrupted raw signals exposes vulnerability to temporal misalignment and severe channel removal. The findings support a bounded interpretation of spiking reservoirs as perturbation-characterized temporal measurement operators for biomedical ERP signal analysis.
+Affective electroencephalographic (EEG) event-related potentials (ERPs) are noisy, subject-dependent, and only partially observed projections of neural dynamics, which makes their representations difficult to assess by endpoint accuracy alone. Endpoint accuracy does not reveal what temporal information a representation preserves, transforms, or suppresses, and the perturbation behavior of spiking-reservoir encodings for affective ERP is rarely characterized. We define a fixed leaky integrate-and-fire (LIF) reservoir with a six-bin spike-count (BSC6) code as a temporal encoding operator, compress it for a linear readout, and audit it under subject-grouped validation against a classical EEG/ERP baseline and under amplitude-noise, temporal-jitter, and channel-dropout perturbations; the reservoir embedding does not exceed the classical baseline on clean classification (balanced accuracy 0.463 vs.\ 0.485) yet degrades more gradually under representation-level amplitude noise and channel dropout, and a fold-local principal-component analysis shows no evidence of optimistic inflation from the transductive basis (balanced accuracy 0.465 vs.\ 0.463). These findings characterize the operating regime of a spiking temporal-encoding operator for biomedical signal analysis rather than asserting diagnostic validity, hardware efficiency, or classifier superiority.
 \end{abstract}
+
 
 \begin{IEEEkeywords}
 EEG, event-related potentials, spiking neural networks, reservoir computing, biomedical signal processing, affective computing, perturbation analysis.
@@ -37,33 +38,37 @@ EEG, event-related potentials, spiking neural networks, reservoir computing, bio
 \section{Introduction}
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.98\textwidth]{fig_reservoir_dynamics.pdf}
-\caption{Reservoir-derived computational objects for affective ERP observations. This paper focuses on the LIF spike raster (a), the membrane response (b), and the $\BSC$ embedding behavior (d). The phase-locking adjacency panels (c) belong to the broader graph stream of the source framework; they are shown only for context and are not a contribution of this conference paper.}
-\label{fig:reservoir_dynamics}
+\includegraphics[width=\textwidth]{fig_pipeline_bsc6_audit.png}
+\caption{Reservoir encoding and perturbation-audit pipeline. Trial-averaged affective EEG/ERP observations are mapped through a fixed LIF reservoir, summarized by six temporal spike-count bins (BSC6), compressed for linear readout, and evaluated under amplitude noise, temporal jitter, and channel-dropout perturbations.}
+\label{fig:pipeline}
 \end{figure*}
 
-Electroencephalographic event-related potentials (ERPs) are time-locked measurements of neural response dynamics. In biomedical data analysis, they offer millisecond-scale temporal information but are difficult to model because the observed waveform is a noisy, low-dimensional projection of an unobserved biological dynamical system. Inter-subject variability, trial averaging, volume conduction, and measurement noise can cause endpoint classifiers to conflate genuine temporal structure with subject-specific nuisance variation. A representation that performs well under one clean validation split may fail to preserve the same signal properties when amplitude noise, temporal misalignment, or channel loss is introduced.
+Electroencephalographic event-related potentials (ERPs) are time-locked measurements of neural response dynamics that offer millisecond-scale temporal information for biomedical data analysis, yet the observed waveform is a noisy, low-dimensional, and subject-dependent projection of an unobserved neural dynamical system \cite{makeig2002dynamic,blankertz2011singletrial}. Inter-subject variability, trial averaging, volume conduction, and measurement noise can cause endpoint classifiers to conflate genuine temporal structure with subject-specific nuisance variation, so a representation that performs well on one clean split may not preserve the same signal properties when amplitude noise, temporal misalignment, or channel loss is introduced.
 
-Spiking neural systems offer one way to construct temporally structured representations without replacing signal analysis by opaque endpoint classification. A fixed recurrent reservoir can act as a nonlinear temporal expansion of the input signal, while spike-count summaries provide discrete observables that are traceable to post-stimulus time windows. The central question is therefore not whether a spiking reservoir universally outperforms classical ERP features, but which temporal information it preserves, transforms, or suppresses under realistic perturbations.
+Reporting only endpoint accuracy does not reveal \emph{what} temporal information a representation preserves, transforms, or suppresses. This gap is acute for spiking encodings: fixed recurrent reservoirs and spiking networks are expressive nonlinear temporal expansions \cite{maass2002real,lukosevicius2009reservoir}, but in EEG/ERP work they are most often evaluated as end-to-end classifiers \cite{gong2023sglnet,craik2019deep} rather than characterized as temporal measurement operators whose discrete spike-count observables remain traceable to post-stimulus time windows.
 
-This paper studies a binned spiking reservoir encoding for affective ERP signal analysis. Each ERP observation is mapped through a fixed leaky integrate-and-fire (LIF) reservoir, summarized by six post-onset spike-count bins, and compressed into a reservoir embedding (Fig.~\ref{fig:reservoir_dynamics}). The resulting representation is evaluated using subject-grouped validation and perturbation diagnostics. The contribution is threefold:
+The perturbation behavior of affective-ERP reservoir encodings---their response to amplitude noise, temporal jitter, and channel dropout---is moreover rarely reported, even though preprocessing and acquisition choices materially affect EEG representations \cite{delpup2025preprocessing}. This is squarely a biomedical signal-analysis and machine-learning-for-biomedical-data problem: as in other EEG-based health and affect inference systems \cite{chiang2023depression,guo2025mma}, the practical question is representational stability under controlled signal corruption, not generic affective computing.
+
+This paper studies a fixed binned spiking reservoir encoding for affective ERP signal analysis and audits it as a temporal encoding operator (Fig.~\ref{fig:pipeline}). Each ERP observation is mapped through a fixed leaky integrate-and-fire (LIF) reservoir, summarized by six post-onset spike-count bins (\BSC{}), and compressed for a linear readout. This paper makes four specific contributions:
 \begin{enumerate}
-    \item We formulate affective ERP analysis as a temporal encoding problem in which a fixed spiking reservoir maps multichannel ERP observations into binned spike-count representations.
-    \item We evaluate the reservoir embedding against classical ERP-derived features under subject-level validation, using balanced accuracy and macro-F1 rather than raw accuracy alone.
-    \item We characterize the operating regime of the encoding under additive amplitude noise, temporal jitter, and channel dropout, separating representation-level robustness from full raw-signal recomputation.
+    \item We define a fixed LIF/\BSC{} temporal encoding operator for affective EEG/ERP observations as a composition of a nonlinear reservoir map, spike-count binning, and an unsupervised projection (Sec.~\ref{sec:methods}, Eq.~\eqref{eq:operator}).
+    \item We evaluate the reservoir embedding against a classical EEG/ERP baseline under subject-grouped validation, using balanced accuracy, macro-F1, and macro one-vs-rest AUC (Sec.~\ref{sec:clean}, Table~\ref{tab:clean}).
+    \item We characterize the perturbation response of the encoding under amplitude noise, temporal jitter, and channel dropout, separating representation-level corruption from raw-signal recomputation (Sec.~\ref{sec:perturb}, Table~\ref{tab:repr_perturb}, Fig.~\ref{fig:perturbation}).
+    \item We bound the transduction of the global unsupervised projection with a fold-local PCA sensitivity analysis, and interpret all results as an operating-regime characterization rather than a classifier-superiority claim (Sec.~\ref{sec:clean}, Table~\ref{tab:pca}).
 \end{enumerate}
-The paper deliberately avoids diagnostic claims. Clinical labels and affective categories define external task structure, while the technical object of study is the reservoir-based temporal representation.
+The paper deliberately avoids diagnostic, hardware-efficiency, and state-of-the-art claims; clinical labels and affective categories define external task structure, while the technical object of study is the reservoir-based temporal representation.
 
 \section{Related Work}
-ERP analysis has traditionally relied on time-window amplitudes, latency measures, spectral summaries, and linear statistical models. These features remain important because they are interpretable and correspond to known temporal components such as P300 and late positive potential responses. However, fixed handcrafted windows may underrepresent nonlinear temporal interactions and may be sensitive to subject-specific variability.
+ERP and EEG analysis have traditionally relied on time-window amplitudes and latencies, time-domain descriptors such as Hjorth parameters \cite{hjorth1970eeg}, spectral and wavelet summaries \cite{subasi2007eeg}, and linear statistical models \cite{blankertz2011singletrial}. These features are interpretable and correspond to known components such as the P300 and late positive potential, and source-level analyses show that evoked responses carry structured temporal dynamics \cite{makeig2002dynamic}. However, fixed handcrafted windows may underrepresent nonlinear temporal interactions and can be sensitive to subject-specific variability.
 
-Reservoir computing provides an alternative in which a high-dimensional recurrent dynamical system transforms an input sequence into a separable state trajectory \cite{maass2002real,jaeger2004harnessing,lukosevicius2009reservoir}. In liquid state machines, recurrent spiking dynamics induce a nonlinear temporal basis, after which a simple readout is trained. This division between fixed dynamics and trained readout is attractive for biomedical signal analysis because it permits the reservoir to be studied as a measurement operator rather than as a fully optimized black-box classifier.
+Reservoir computing offers an alternative in which a high-dimensional recurrent dynamical system transforms an input sequence into a separable state trajectory \cite{maass2002real,jaeger2001echo,jaeger2004harnessing,lukosevicius2009reservoir}. In liquid state machines, recurrent spiking dynamics induce a nonlinear temporal basis on which a simple readout is trained; related spiking models encode information in spike timing and counts \cite{diehl2015unsupervised,roy2019towards}. This separation of fixed dynamics from a trained readout is attractive for biomedical signal analysis because the reservoir can be studied as a measurement operator rather than as a fully optimized black-box classifier.
 
-Spiking neural networks have been applied to EEG and other biomedical signals, but many studies emphasize endpoint accuracy. For perturbation-sensitive physiological data, accuracy alone is insufficient. A biomedical signal representation should also be evaluated through subject-level generalization, controlled corruption, ablation, and the relation between representation geometry and signal structure. This paper follows that operating-regime perspective.
+Spiking and deep networks have been applied to EEG and ERP signals \cite{gong2023sglnet,lawhern2018eegnet,craik2019deep}, but most studies emphasize endpoint accuracy, while preprocessing and acquisition choices that strongly affect EEG representations are often under-examined \cite{delpup2025preprocessing}. For perturbation-sensitive physiological data, accuracy alone is insufficient: a representation should also be assessed through subject-level generalization, controlled corruption, and representation-geometry analysis \cite{kornblith2019similarity}. This paper adopts that operating-regime perspective for a fixed reservoir encoding.
 
 \section{Methods}
+\label{sec:methods}
 \subsection{ERP Observation Model}
-Let $X_s^{(c)}\in\R^{M\times T}$ denote the trial-averaged ERP observation for subject $s$ and affective condition $c$, with $M$ electrodes and $T$ temporal samples. We treat $X_s^{(c)}$ as a noisy observation of an unobserved neural state trajectory:
+Let $X_s^{(c)}\in\R^{C\times T}$ denote the trial-averaged ERP observation for subject $s$ and affective condition $c$, with $C$ electrodes (channels) and $T$ temporal samples; observations are stored as $T\times C$ arrays and transposed before encoding. We treat $X_s^{(c)}$ as a noisy observation of an unobserved neural state trajectory:
 \begin{equation}
     \xi_{t+1}=f_\theta(\xi_t,u_t)+\eta_t,\qquad
     x_t=H\xi_t+\epsilon_t,
@@ -84,13 +89,29 @@ Post-onset activity is summarized by six equal temporal bins. For reservoir unit
 \end{equation}
 using a post-onset window $t\in[10,70]$. This produces a \BSC{} vector that preserves coarse temporal traceability while reducing sensitivity to sample-level fluctuations. Per-electrode spike-bin features are compressed to $64$ principal components, and the electrode-level embeddings are concatenated across the $34$ channels into a trial-level reservoir representation $E_s^{(c)}\in\R^{2176}$. This principal-component projection is estimated once, unsupervised and without affective labels, over the spike-bin vectors pooled across all observations and electrodes of the full cohort. Because the basis is fitted on every subject---including those later held out during validation---it is transductive with respect to subject inclusion, and we therefore report it as a fixed representation audit rather than as leakage-free preprocessing. To bound any optimism introduced by this fixed basis, we additionally evaluate a fold-local variant in which the projection is refitted on each fold's training subjects only (Sec.~\ref{sec:clean}).
 
+Writing $X\in\R^{C\times T}$ for a trial-averaged observation with $C$ channels and $T$ samples, and $s_t=z_t\in\{0,1\}^{N}$ for the reservoir spike state at post-onset sample $t$, the encoding is a fixed composition of a nonlinear temporal map, spike-count binning, and the unsupervised projection:
+\begin{equation}\label{eq:operator}
+\begin{aligned}
+b_k &= \sum_{t\in\mathcal{T}_k} s_t,\quad k=1,\dots,6,\\
+E &= \phi_{\mathrm{PCA}}\!\big([b_1,\dots,b_6]\big)=\Phi(X),
+\end{aligned}
+\end{equation}
+so that $E=\Phi(X)$ is a fixed observable of the input, defined before any label is seen, rather than a label-trained classifier.
+
 Fig.~\ref{fig:reservoir_dynamics} shows the reservoir-derived computational objects for the three affective conditions: the LIF spike raster, the membrane-potential response, and the $\BSC$ embedding projected to two principal components. These panels make the temporal encoding auditable: spike density and membrane dynamics are organized in post-onset time, and the projection summarizes how the binned code separates conditions at the population level.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.98\textwidth]{fig_reservoir_dynamics.pdf}
+\caption{Reservoir-derived computational objects for affective ERP observations. This paper focuses on the LIF spike raster (a), the membrane response (b), and the $\BSC$ embedding behavior (d). The phase-locking adjacency panels (c) belong to the broader graph stream of the source framework; they are shown only for context and are not a contribution of this conference paper.}
+\label{fig:reservoir_dynamics}
+\end{figure*}
 
 \subsection{Baselines and Readout}
 Classical ERP-derived baselines are included to prevent the reservoir from being evaluated against weak comparators. The primary baseline consists of bandpower/ERP-derived features evaluated with the same subject-grouped validation protocol. A linear readout is used where possible to test representational separability without confounding the result with a high-capacity classifier. Decision-tree and random-forest readouts are reserved for sensitivity checks rather than serving as the primary evidence.
 
 \subsection{Perturbation Diagnostics}
-Two perturbation regimes are separated. First, representation-level perturbations corrupt the extracted feature representation and test whether downstream classifiers are sensitive to feature-space amplitude noise and dropout. Second, raw-signal recomputation applies perturbations before feature extraction and recomputes the reservoir representation. The second regime is stricter because corruption propagates through reservoir dynamics before classification.
+Two perturbation regimes are separated. First, representation-level perturbations corrupt the extracted feature representation and test whether downstream classifiers are sensitive to feature-space amplitude noise and dropout. Second, raw-signal recomputation applies perturbations before feature extraction and recomputes the reservoir representation. The second regime is stricter because corruption propagates through reservoir dynamics before classification. Formally, a perturbation is a controlled transformation $\mathcal{P}_\eta$ applied either to the signal, $X\mapsto\mathcal{P}_\eta(X)$ with $E=\Phi(\mathcal{P}_\eta(X))$ (raw-signal recomputation), or to the representation, $E\mapsto\mathcal{P}_\eta(E)$ (representation level), where $\eta$ indexes the amplitude-noise signal-to-noise ratio, the temporal-jitter offset, or the channel-dropout fraction.
 
 The perturbations are:
 \begin{itemize}
@@ -128,7 +149,7 @@ Validation & subject-grouped cross-validation \\
 The primary task is three-class affective condition analysis. This task is not interpreted as a diagnostic decision problem. It is used as a controlled external label structure for evaluating whether the temporal representation separates affective ERP responses under subject-level validation.
 
 \subsection{Validation}
-All classifier evaluations use subject-level partitioning: observations from the same subject do not appear simultaneously in training and test folds. This prevents leakage caused by subject-specific waveform structure. Reported metrics include balanced accuracy and macro-F1. Where confidence intervals are reported, they are computed over the validation procedure used in the source experiment.
+All classifier evaluations use subject-level partitioning: observations from the same subject do not appear simultaneously in training and test folds. This prevents leakage caused by subject-specific waveform structure. Reported metrics include balanced accuracy and macro-F1. Where confidence intervals are reported, they are computed over the validation procedure used in the source experiment. For provenance, the clean A0 and A1 results, the A1 representation-level perturbations, and the fold-local PCA sensitivity were recomputed under this protocol; the raw-signal recomputation values and the baseline (A0) perturbation values are carried from prior validated aggregate outputs of the same pipeline and are not re-derived here.
 
 \subsection{Manuscript Boundary}
 The present paper isolates the reservoir temporal-encoding component. Graph-topological observables, structure--function coupling, and closed-loop evidence-accumulation analyses are outside the scope of this submission. This boundary is methodological rather than cosmetic: the present paper tests the operating regime of $E_s^{(c)}$, the reservoir embedding, as a biomedical signal representation.
@@ -136,7 +157,7 @@ The present paper isolates the reservoir temporal-encoding component. Graph-topo
 \section{Results}
 \subsection{Clean Subject-Level Classification}
 \label{sec:clean}
-Table~\ref{tab:clean} reports clean three-class affective condition performance for the classical baseline, the reservoir embedding, and related temporal descriptors. The reservoir embedding does not dominate the classical baseline under clean static classification. This is an important negative constraint: the reservoir should not be presented as a universal replacement for ERP features. Instead, the evidence supports evaluating it as a distinct temporal encoding with its own perturbation-response profile.
+Table~\ref{tab:clean} reports clean three-class affective condition performance for the classical baseline (A0) and the reservoir embedding (A1), both reproduced under the present subject-grouped protocol. The reservoir embedding does not dominate the classical baseline under clean static classification. This is an important negative constraint: the reservoir should not be presented as a universal replacement for ERP features. Instead, the evidence supports evaluating it as a distinct temporal encoding with its own perturbation-response profile.
 
 \begin{table}[t]
 \caption{Clean subject-level affective condition performance.}
@@ -148,17 +169,32 @@ Configuration & Feature family & BA & Macro-F1 \\
 \midrule
 A0 & Classical bandpower/ERP & 0.485 & 0.483 \\
 A1 & Reservoir embedding $E$ & 0.463 & 0.460 \\
-A2 & Temporal descriptors $D$ & 0.432 & 0.429 \\
-A6 & Reservoir + descriptors $E{+}D$ & 0.478 & 0.475 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The result indicates that the reservoir embedding provides discriminative information, but the clean static task remains competitive for conventional ERP-derived features. This finding constrains the interpretation of spiking reservoirs: the reservoir acts as a nonlinear temporal measurement operator, not as an automatically superior classifier.
 
-\emph{Fold-local PCA sensitivity.} Refitting the principal-component projection on each fold's training subjects only yields balanced accuracy $0.465$, macro-F1 $0.462$, and macro one-vs-rest AUC $0.649$ for the reservoir embedding, compared with $0.463$, $0.460$, and $0.644$ for the fixed global pooled basis. The fold-local sensitivity analysis did not show evidence of optimistic inflation from the transductive PCA basis under the tested subject-grouped protocol.
+\emph{Fold-local PCA sensitivity.} Because the unsupervised projection of Eq.~\eqref{eq:operator} is fitted once over the pooled cohort, we test whether its transduction inflates performance by refitting it on each fold's training subjects only (Table~\ref{tab:pca}). The fold-local variant yields balanced accuracy $0.465$, macro-F1 $0.462$, and macro one-vs-rest AUC $0.649$ for the reservoir embedding, compared with $0.463$, $0.460$, and $0.644$ for the fixed global pooled basis. The fold-local sensitivity analysis did not show evidence of optimistic inflation from the transductive PCA basis under the tested subject-grouped protocol.
+
+\begin{table}[t]
+\caption{Fold-local PCA sensitivity for the reservoir embedding $E$ (A1) under the subject-grouped protocol. ROC-AUC is macro one-vs-rest from pooled out-of-fold probabilities.}
+\label{tab:pca}
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+PCA basis & BA & Macro-F1 & OvR-AUC \\
+\midrule
+Global pooled (transductive) & 0.463 & 0.460 & 0.644 \\
+Fold-local (per-fold train) & 0.465 & 0.462 & 0.649 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Representation-Level Perturbation Response}
+\label{sec:perturb}
 Table~\ref{tab:repr_perturb} summarizes representative feature-space perturbation results. Under additive amplitude corruption, the classical bandpower baseline degrades from BA $0.485$ to $0.395$ at 5 dB. The reservoir embedding degrades more weakly, from BA $0.463$ to $0.449$. A similar pattern occurs under feature dropout, where the reservoir embedding remains close to its clean value at 30\% dropout.
 
 \begin{table}[t]
@@ -213,7 +249,7 @@ The results support a bounded interpretation of binned spiking reservoirs for af
 
 This distinction is central. A reservoir representation is not validated by a single clean accuracy number. It should be characterized by the information it preserves, the transformations it induces, and the conditions under which its dynamics amplify or suppress task-relevant variation. The \BSC{} representation provides temporal traceability because each component corresponds to a post-onset spike-count interval. It also constrains model capacity: the recurrent dynamics are fixed, and the downstream readout operates on an extracted representation rather than learning arbitrary temporal filters from the target labels.
 
-Several limitations remain. First, the dataset is a single affective ERP cohort, and the results require external validation before generalization to other EEG paradigms. Second, the study evaluates software-level representations, not neuromorphic hardware energy or latency. Third, the perturbation diagnostics are not equivalent to full acquisition artifacts; they are controlled operating-regime tests. Fourth, the present paper isolates the reservoir embedding and does not evaluate graph topology or structure--function coupling. These exclusions are intentional and preserve a narrow technical claim.
+Several limitations remain. First, the dataset is a single affective ERP cohort, and the results require external validation before generalization to other EEG paradigms. Second, the study evaluates software-level representations, not neuromorphic hardware energy or latency, which would require measurement on dedicated platforms \cite{davies2018loihi,furber2014spinnaker}. Third, the perturbation diagnostics are not equivalent to full acquisition artifacts; they are controlled operating-regime tests. Fourth, the present paper isolates the reservoir embedding and does not evaluate graph topology or structure--function coupling. These exclusions are intentional and preserve a narrow technical claim.
 
 \section{Conclusion}
 This paper evaluated a binned spiking reservoir representation for affective ERP signal analysis under subject-level validation and controlled perturbation diagnostics. The evidence does not support a broad claim that reservoir embeddings dominate classical ERP features for clean static classification. It does support a narrower and more useful claim: the reservoir embedding defines a nonlinear temporal measurement operator with a distinct perturbation-response profile. This characterization provides a reproducible basis for studying when event-driven temporal encodings preserve or suppress discriminative structure in biomedical ERP data.
@@ -222,16 +258,37 @@ This paper evaluated a binned spiking reservoir representation for affective ERP
 \begin{thebibliography}{99}
 
 \bibitem{maass2002real}
-W. Maass, T. Natschlaeger, and H. Markram, ``Real-time computing without stable states: A new framework for neural computation based on perturbations,'' \emph{Neural Computation}, vol. 14, no. 11, pp. 2531--2560, 2002.
+W. Maass, T. Natschl\"ager, and H. Markram, ``Real-time computing without stable states: A new framework for neural computation based on perturbations,'' \emph{Neural Computation}, vol. 14, no. 11, pp. 2531--2560, 2002.
+
+\bibitem{jaeger2001echo}
+H. Jaeger, ``The echo state approach to analysing and training recurrent neural networks,'' German National Research Center for Information Technology, GMD Report 148, 2001.
 
 \bibitem{jaeger2004harnessing}
 H. Jaeger and H. Haas, ``Harnessing nonlinearity: Predicting chaotic systems and saving energy in wireless communication,'' \emph{Science}, vol. 304, no. 5667, pp. 78--80, 2004.
 
 \bibitem{lukosevicius2009reservoir}
-M. Lukosevicius and H. Jaeger, ``Reservoir computing approaches to recurrent neural network training,'' \emph{Computer Science Review}, vol. 3, no. 3, pp. 127--149, 2009.
+M. Luko\v{s}evi\v{c}ius and H. Jaeger, ``Reservoir computing approaches to recurrent neural network training,'' \emph{Computer Science Review}, vol. 3, no. 3, pp. 127--149, 2009.
+
+\bibitem{diehl2015unsupervised}
+P. U. Diehl and M. Cook, ``Unsupervised learning of digit recognition using spike-timing-dependent plasticity,'' \emph{Frontiers in Computational Neuroscience}, vol. 9, p. 99, 2015.
 
 \bibitem{roy2019towards}
 K. Roy, A. Jaiswal, and P. Panda, ``Towards spike-based machine intelligence with neuromorphic computing,'' \emph{Nature}, vol. 575, pp. 607--617, 2019.
+
+\bibitem{gong2023sglnet}
+P. Gong, P. Wang, Y. Zhou, and D. Zhang, ``A spiking neural network with adaptive graph convolution and LSTM for EEG-based brain-computer interfaces,'' \emph{IEEE Trans. Neural Syst. Rehabil. Eng.}, vol. 31, pp. 1440--1450, 2023.
+
+\bibitem{hjorth1970eeg}
+B. Hjorth, ``EEG analysis based on time domain properties,'' \emph{Electroencephalography and Clinical Neurophysiology}, vol. 29, no. 3, pp. 306--310, 1970.
+
+\bibitem{subasi2007eeg}
+A. Subasi, ``EEG signal classification using wavelet feature extraction and a mixture of expert model,'' \emph{Expert Systems with Applications}, vol. 32, no. 4, pp. 1084--1093, 2007.
+
+\bibitem{makeig2002dynamic}
+S. Makeig, M. Westerfield, T.-P. Jung, S. Enghoff, J. Townsend, E. Courchesne, and T. J. Sejnowski, ``Dynamic brain sources of visual evoked responses,'' \emph{Science}, vol. 295, no. 5555, pp. 690--694, 2002.
+
+\bibitem{blankertz2011singletrial}
+B. Blankertz, S. Lemm, M. Treder, S. Haufe, and K.-R. M\"uller, ``Single-trial analysis and classification of ERP components---a tutorial,'' \emph{NeuroImage}, vol. 56, no. 2, pp. 814--825, 2011.
 
 \bibitem{lawhern2018eegnet}
 V. J. Lawhern, A. J. Solon, N. R. Waytowich, S. M. Gordon, C. P. Hung, and B. J. Lance, ``EEGNet: A compact convolutional neural network for EEG-based brain-computer interfaces,'' \emph{Journal of Neural Engineering}, vol. 15, no. 5, 056013, 2018.
@@ -239,11 +296,23 @@ V. J. Lawhern, A. J. Solon, N. R. Waytowich, S. M. Gordon, C. P. Hung, and B. J.
 \bibitem{craik2019deep}
 A. Craik, Y. He, and J. L. Contreras-Vidal, ``Deep learning for electroencephalogram (EEG) classification tasks: A review,'' \emph{Journal of Neural Engineering}, vol. 16, no. 3, 031001, 2019.
 
-\bibitem{makeig2004mining}
-S. Makeig, M. Westerfield, T.-P. Jung, S. Enghoff, J. Townsend, E. Courchesne, and T. J. Sejnowski, ``Dynamic brain sources of visual evoked responses,'' \emph{Science}, vol. 295, no. 5555, pp. 690--694, 2002.
+\bibitem{chiang2023depression}
+H.-S. Chiang, M.-Y. Chen, and L.-S. Liao, ``Cognitive depression detection cyber-medical system based on EEG analysis and deep learning approaches,'' \emph{IEEE J. Biomed. Health Inform.}, vol. 27, no. 2, pp. 608--616, 2023.
 
-\bibitem{blankertz2011singletrial}
-B. Blankertz, S. Lemm, M. Treder, S. Haufe, and K.-R. Mueller, ``Single-trial analysis and classification of ERP components---a tutorial,'' \emph{NeuroImage}, vol. 56, no. 2, pp. 814--825, 2011.
+\bibitem{guo2025mma}
+Y. Guo, K. Yang, and Y. Wu, ``A multi-modality attention network for driver fatigue detection based on frontal EEG, EDA and PPG signals,'' \emph{IEEE J. Biomed. Health Inform.}, vol. 29, no. 6, pp. 4009--4022, 2025.
+
+\bibitem{delpup2025preprocessing}
+F. Del Pup, A. Zanola, L. F. Tshimanga, A. Bertoldo, and M. Atzori, ``The more, the better? Evaluating the role of EEG preprocessing for deep learning applications,'' \emph{IEEE Trans. Neural Syst. Rehabil. Eng.}, vol. 33, pp. 1061--1070, 2025.
+
+\bibitem{kornblith2019similarity}
+S. Kornblith, M. Norouzi, H. Lee, and G. Hinton, ``Similarity of neural network representations revisited,'' in \emph{Proc. Int. Conf. Machine Learning}, 2019, pp. 3519--3529.
+
+\bibitem{davies2018loihi}
+M. Davies \emph{et al.}, ``Loihi: A neuromorphic manycore processor with on-chip learning,'' \emph{IEEE Micro}, vol. 38, no. 1, pp. 82--99, 2018.
+
+\bibitem{furber2014spinnaker}
+S. B. Furber, F. Galluppi, S. Temple, and L. A. Plana, ``The SpiNNaker project,'' \emph{Proceedings of the IEEE}, vol. 102, no. 5, pp. 652--665, 2014.
 
 \end{thebibliography}
 
