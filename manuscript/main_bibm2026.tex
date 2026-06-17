@@ -68,7 +68,7 @@ Spiking and deep networks have been applied to EEG and ERP signals \cite{gong202
 \section{Methods}
 \label{sec:methods}
 \subsection{ERP Observation Model}
-Let $X_s^{(c)}\in\R^{M\times T}$ denote the trial-averaged ERP observation for subject $s$ and affective condition $c$, with $M$ electrodes and $T$ temporal samples. We treat $X_s^{(c)}$ as a noisy observation of an unobserved neural state trajectory:
+Let $X_s^{(c)}\in\R^{C\times T}$ denote the trial-averaged ERP observation for subject $s$ and affective condition $c$, with $C$ electrodes (channels) and $T$ temporal samples; observations are stored as $T\times C$ arrays and transposed before encoding. We treat $X_s^{(c)}$ as a noisy observation of an unobserved neural state trajectory:
 \begin{equation}
     \xi_{t+1}=f_\theta(\xi_t,u_t)+\eta_t,\qquad
     x_t=H\xi_t+\epsilon_t,
@@ -149,7 +149,7 @@ Validation & subject-grouped cross-validation \\
 The primary task is three-class affective condition analysis. This task is not interpreted as a diagnostic decision problem. It is used as a controlled external label structure for evaluating whether the temporal representation separates affective ERP responses under subject-level validation.
 
 \subsection{Validation}
-All classifier evaluations use subject-level partitioning: observations from the same subject do not appear simultaneously in training and test folds. This prevents leakage caused by subject-specific waveform structure. Reported metrics include balanced accuracy and macro-F1. Where confidence intervals are reported, they are computed over the validation procedure used in the source experiment.
+All classifier evaluations use subject-level partitioning: observations from the same subject do not appear simultaneously in training and test folds. This prevents leakage caused by subject-specific waveform structure. Reported metrics include balanced accuracy and macro-F1. Where confidence intervals are reported, they are computed over the validation procedure used in the source experiment. For provenance, the clean A0 and A1 results, the A1 representation-level perturbations, and the fold-local PCA sensitivity were recomputed under this protocol; the raw-signal recomputation values and the baseline (A0) perturbation values are carried from prior validated aggregate outputs of the same pipeline and are not re-derived here.
 
 \subsection{Manuscript Boundary}
 The present paper isolates the reservoir temporal-encoding component. Graph-topological observables, structure--function coupling, and closed-loop evidence-accumulation analyses are outside the scope of this submission. This boundary is methodological rather than cosmetic: the present paper tests the operating regime of $E_s^{(c)}$, the reservoir embedding, as a biomedical signal representation.
@@ -157,7 +157,7 @@ The present paper isolates the reservoir temporal-encoding component. Graph-topo
 \section{Results}
 \subsection{Clean Subject-Level Classification}
 \label{sec:clean}
-Table~\ref{tab:clean} reports clean three-class affective condition performance for the classical baseline, the reservoir embedding, and related temporal descriptors. The reservoir embedding does not dominate the classical baseline under clean static classification. This is an important negative constraint: the reservoir should not be presented as a universal replacement for ERP features. Instead, the evidence supports evaluating it as a distinct temporal encoding with its own perturbation-response profile.
+Table~\ref{tab:clean} reports clean three-class affective condition performance for the classical baseline (A0) and the reservoir embedding (A1), both reproduced under the present subject-grouped protocol. The reservoir embedding does not dominate the classical baseline under clean static classification. This is an important negative constraint: the reservoir should not be presented as a universal replacement for ERP features. Instead, the evidence supports evaluating it as a distinct temporal encoding with its own perturbation-response profile.
 
 \begin{table}[t]
 \caption{Clean subject-level affective condition performance.}
@@ -169,8 +169,6 @@ Configuration & Feature family & BA & Macro-F1 \\
 \midrule
 A0 & Classical bandpower/ERP & 0.485 & 0.483 \\
 A1 & Reservoir embedding $E$ & 0.463 & 0.460 \\
-A2 & Temporal descriptors $D$ & 0.432 & 0.429 \\
-A6 & Reservoir + descriptors $E{+}D$ & 0.478 & 0.475 \\
 \bottomrule
 \end{tabular}
 \end{table}
