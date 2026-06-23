@@ -6,7 +6,7 @@ Repository: `OperationDistinctnessConf1`
 
 Target paper:
 
-**Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis**
+**Coarse-Grained Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis**
 
 Submission target: IEEE BIBM 2026 Doctoral Forum route, written as a standard IEEE BIBM proceedings paper.
 

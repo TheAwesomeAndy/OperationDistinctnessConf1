@@ -3,7 +3,7 @@
 ## Submission
 
 **Target:** IEEE BIBM 2026  
-**Working title:** Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis
+**Working title:** Coarse-Grained Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis
 
 ## Purpose
 
@@ -81,4 +81,4 @@ List as an IEEE BIBM proceedings paper unless official IEEE metadata explicitly 
 
 Suggested citation format:
 
-Andrew A. Lane, W. Tang, and B. D. Nelson, "Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis," in Proceedings of the IEEE International Conference on Bioinformatics and Biomedicine (BIBM), Dallas, TX, USA, 2026.
+Andrew A. Lane, W. Tang, and B. D. Nelson, "Coarse-Grained Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis," in Proceedings of the IEEE International Conference on Bioinformatics and Biomedicine (BIBM), Dallas, TX, USA, 2026.
