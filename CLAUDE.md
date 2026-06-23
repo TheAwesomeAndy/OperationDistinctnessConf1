@@ -228,6 +228,6 @@ Eligibility and Doctoral Forum routing belong in cover materials, not the scient
 
 Use conditional eligibility language if needed:
 
-“First author and primary contributor; Ph.D. candidate/recently defended doctoral researcher in Electrical and Computer Engineering at Stony Brook University, with degree conferral status to be stated accurately at submission.”
+“First author and primary contributor; Ph.D. student currently enrolled in the Electrical and Computer Engineering program at Stony Brook University.”
 
 Do not invent awards, dates, roles, affiliations, or status.
