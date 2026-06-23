@@ -27,7 +27,7 @@
 \maketitle
 
 \begin{abstract}
-Affective electroencephalographic (EEG) event-related potentials (ERPs) are noisy, subject-dependent, and only partially observed projections of neural dynamics. Endpoint accuracy alone does not reveal what temporal information a representation retains or discards, and the perturbation behavior of spiking-reservoir encodings for affective ERP has not been systematically reported. We define a fixed leaky integrate-and-fire (LIF) reservoir with a six-bin spike-count (\BSC{}) code as a temporal encoding operator, compress it for a linear readout, and audit it under subject-grouped validation against a classical EEG/ERP baseline and under amplitude-noise, temporal-jitter, and channel-dropout perturbations. The reservoir embedding does not exceed the classical baseline on clean classification (balanced accuracy 0.463 vs.\ 0.485) yet degrades more gradually under representation-level amplitude noise and channel dropout. A fold-local principal-component analysis shows no evidence of optimistic inflation from the transductive basis (balanced accuracy 0.465 vs.\ 0.463).
+Affective electroencephalographic (EEG) event-related potentials (ERPs) are noisy, subject-dependent, and only partially observed projections of neural dynamics. Endpoint accuracy alone does not reveal what temporal information a representation retains or discards, and the perturbation behavior of spiking-reservoir encodings for affective ERP has not been systematically reported. We define a fixed leaky integrate-and-fire (LIF) reservoir with a six-bin spike-count (\BSC{}) code as a temporal encoding operator, compress it for a linear readout, and audit it under subject-grouped validation against a classical EEG/ERP baseline and under amplitude-noise, temporal-jitter, and channel-dropout perturbations. The reservoir embedding does not exceed the classical baseline on clean classification (balanced accuracy $0.463$ vs.\ $0.485$) yet degrades more gradually under representation-level amplitude noise and channel dropout. Controls show this robustness is not a dimensionality artifact (a dimensionality-matched random projection of the baseline degrades like the baseline) and that all encodings exceed a label-permutation null; an ablation further shows that a single-bin total spike count matches the six-bin code, so the operative factor is the fixed reservoir embedding rather than temporal bin granularity.
 \end{abstract}
 
 
@@ -36,7 +36,7 @@ EEG, event-related potentials, spiking neural networks, reservoir computing, bio
 \end{IEEEkeywords}
 
 \section{Introduction}
-\begin{figure*}[!t]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{fig_pipeline_bsc6_audit.png}
 \caption{Reservoir encoding and perturbation-audit pipeline. Trial-averaged affective EEG/ERP observations are mapped through a fixed LIF reservoir, summarized by six temporal spike-count bins (\BSC{}), compressed for linear readout, and evaluated under amplitude noise, temporal jitter, and channel-dropout perturbations.}
@@ -49,12 +49,12 @@ Reporting only endpoint accuracy does not reveal \emph{which} temporal features 
 
 The perturbation behavior of affective-ERP reservoir encodings---their response to amplitude noise, temporal jitter, and channel dropout---is rarely reported, even though preprocessing and acquisition choices materially affect EEG representations \cite{delpup2025preprocessing,chiang2023depression,guo2025mma}.
 
-This paper studies a fixed spiking reservoir state-space encoding for affective ERP signal analysis and audits it as a temporal encoding operator (Fig.~\ref{fig:pipeline}). Each ERP observation is mapped through a fixed leaky integrate-and-fire (LIF) reservoir, summarized by six post-onset spike-count bins (\BSC{}), and compressed for a linear readout. The contributions are:
+This paper studies a fixed spiking reservoir state-space encoding for affective ERP signal analysis and audits it as a temporal encoding operator (Fig.~\ref{fig:pipeline}). Each ERP observation is mapped through a fixed leaky integrate-and-fire (LIF) reservoir, summarized by six post-onset spike-count bins (\BSC{}), and compressed for a linear readout. The paper isolates this reservoir temporal-encoding component; graph topology, structure--function coupling, and closed-loop analyses belong to other parts of a broader doctoral framework and are outside this submission. The contributions are:
 \begin{enumerate}
     \item A fixed LIF/\BSC{} temporal encoding operator for affective EEG/ERP observations, defined as a composition of a nonlinear reservoir map, spike-count binning, and an unsupervised projection (Sec.~\ref{sec:methods}, Eq.~\eqref{eq:operator}).
-    \item Evaluation of the reservoir embedding against a classical EEG/ERP baseline under subject-grouped validation, using balanced accuracy, macro-F1, and macro one-vs-rest AUC (Sec.~\ref{sec:clean}, Table~\ref{tab:clean}).
+    \item Evaluation of the reservoir embedding against a classical EEG/ERP baseline under subject-grouped validation, using balanced accuracy, macro-F1, and macro one-vs-rest AUC with per-fold confidence intervals and a permutation null (Sec.~\ref{sec:clean}, Table~\ref{tab:clean}).
     \item Perturbation-response characterization under amplitude noise, temporal jitter, and channel dropout, separating representation-level corruption from raw-signal recomputation (Sec.~\ref{sec:perturb}, Table~\ref{tab:repr_perturb}, Fig.~\ref{fig:perturbation}).
-    \item A fold-local PCA sensitivity analysis bounding the transduction of the global unsupervised projection (Sec.~\ref{sec:clean}, Table~\ref{tab:pca}).
+    \item Controls that bound common confounds---fold-local PCA, a dimensionality-matched random projection, a label-permutation null, and a single-bin spike-count ablation---and identify the fixed reservoir embedding, rather than temporal bin granularity, as the operative factor (Sec.~\ref{sec:clean}, Table~\ref{tab:pca}).
 \end{enumerate}
 Clinical labels and affective categories define the external task structure; the reservoir-based temporal representation is the object of study.
 
@@ -69,116 +69,96 @@ Spiking and deep networks have been applied to EEG and ERP signals \cite{gong202
 \label{sec:methods}
 \subsection{ERP Observation Model}
 Let $X_s^{(c)}\in\R^{C\times T}$ denote the trial-averaged ERP observation for subject $s$ and affective condition $c$, with $C$ electrodes (channels) and $T$ temporal samples; observations are stored as $T\times C$ arrays and transposed before encoding. We treat $X_s^{(c)}$ as a noisy observation of an unobserved neural state trajectory:
-\begin{equation}
+\begin{equation}\label{eq:obs}
     \xi_{t+1}=f_\theta(\xi_t,u_t)+\eta_t,\qquad
     x_t=H\xi_t+\epsilon_t,
 \end{equation}
-where $\xi_t$ is the latent neural state, $H$ is a measurement operator induced by scalp observation, and $\epsilon_t$ captures measurement and preprocessing noise.
+where $\xi_t$ is the latent neural state, $H$ is a measurement operator induced by scalp observation, and $\epsilon_t$ captures measurement and preprocessing noise. The perturbations below act directly on this observation model (Sec.~\ref{sec:perturb}).
 
 \subsection{Spiking Reservoir Encoding}
-For each electrode trace, the signal is passed through a fixed LIF reservoir of $256$ neurons with recurrent weights $W$ (spectral radius $\rho=0.9$), input weights $W_{\mathrm{in}}$, leak parameter $\beta=0.05$, and firing threshold $\vartheta$. A compact discrete-time representation is
+For each electrode trace, the signal is passed through a fixed LIF reservoir of $256$ neurons with recurrent weights $W$ scaled to spectral radius $\rho=0.9$ (near the edge of stability), input weights $W_{\mathrm{in}}$, leak parameter $\beta=0.05$, and firing threshold $\vartheta$. A compact discrete-time representation is
 \begin{align}
     v_{t+1} &= \beta v_t + W z_t + W_{\mathrm{in}}x_t - \vartheta r_t, \\
     z_{t+1} &= \Ind[v_{t+1}\geq \vartheta],
 \end{align}
 where $v_t$ is the membrane state, $z_t$ is the binary spike vector, and $r_t$ denotes reset after threshold crossing. The reservoir is fixed during feature extraction; only the downstream readout is trained.
 
-Post-onset activity is summarized by six equal temporal bins. For reservoir unit $j$ and bin $k$, the binned spike-count code is
-\begin{equation}
-    b_{j,k}=\sum_{t\in\mathcal{B}_k} z_j(t),\qquad k=1,\ldots,6.
-\end{equation}
-using a post-onset window $t\in[10,70]$. This produces a \BSC{} vector that preserves approximate temporal traceability while reducing sensitivity to sample-level fluctuations. Per-electrode spike-bin features are compressed to $64$ principal components, and the electrode-level embeddings are concatenated across the $34$ channels into a trial-level reservoir representation $E_s^{(c)}\in\R^{2176}$. This principal-component projection is estimated once, unsupervised and without affective labels, over the spike-bin vectors pooled across all observations and electrodes of the full cohort. Because the basis is fitted on every subject---including those later held out during validation---it is transductive with respect to subject inclusion, and we therefore report it as a fixed representation audit rather than as leakage-free preprocessing. To bound any optimism introduced by this fixed basis, we additionally evaluate a fold-local variant in which the projection is refitted on each fold's training subjects only (Sec.~\ref{sec:clean}).
-
-Writing $X\in\R^{C\times T}$ for a trial-averaged observation with $C$ channels and $T$ samples, and $s_t=z_t\in\{0,1\}^{N}$ for the reservoir spike state at post-onset sample $t$, the encoding is a fixed composition of a nonlinear temporal map, spike-count binning, and the unsupervised projection:
+Post-onset activity is summarized by six equal temporal bins over the window $t\in[10,70]$. For reservoir unit $j$ and bin $k$, the binned spike-count code is $b_{j,k}=\sum_{t\in\mathcal{B}_k} z_j(t)$, $k=1,\ldots,6$. Per-electrode spike-bin features are compressed to $64$ principal components and concatenated across the $34$ channels into a trial-level reservoir representation $E_s^{(c)}\in\R^{2176}$. Writing $s_t=z_t\in\{0,1\}^{N}$ for the reservoir spike state, the encoding is a fixed composition of a nonlinear temporal map, spike-count binning, and the unsupervised projection:
 \begin{equation}\label{eq:operator}
-\begin{aligned}
-b_k &= \sum_{t\in\mathcal{T}_k} s_t,\quad k=1,\dots,6,\\
-E &= \phi_{\mathrm{PCA}}\!\big([b_1,\dots,b_6]\big)=\Phi(X),
-\end{aligned}
+E=\phi_{\mathrm{PCA}}\!\big([b_1,\dots,b_6]\big)=\Phi(X),
 \end{equation}
-so that $E=\Phi(X)$ is a fixed, label-free observable of the input.
+so that $E=\Phi(X)$ is a fixed, label-free observable of the input. The principal-component projection is estimated once, unsupervised and without affective labels, over the spike-bin vectors pooled across all observations and electrodes; because the basis is fitted on every subject---including those later held out---it is transductive with respect to subject inclusion, and we report it as a fixed representation audit rather than leakage-free preprocessing (bounded by the fold-local control in Sec.~\ref{sec:clean}). As a temporal-structure control, we also form a single-bin code (BSC$_1$, the total post-onset spike count per unit) processed through the identical PCA pipeline.
 
-Fig.~\ref{fig:reservoir_dynamics} shows the reservoir-derived computational objects for the three affective conditions: the LIF spike raster, the membrane-potential response, and the $\BSC$ embedding projected to two principal components. Spike density and membrane dynamics are organized in post-onset time; the projection summarizes condition separation at the population level.
+Fig.~\ref{fig:reservoir_dynamics} shows the reservoir-derived computational objects for the three affective conditions: the LIF spike raster, the membrane-potential response, and the \BSC{} embedding projected to two principal components.
 
-\begin{figure*}[!t]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.98\textwidth]{fig_reservoir_dynamics.pdf}
-\caption{Reservoir-derived computational objects for affective ERP observations. (a)~LIF spike raster. (b)~Membrane response. (d)~$\BSC$ embedding projected to the first two principal components.}
+\caption{Reservoir-derived computational objects for affective ERP observations. (a)~LIF spike raster. (b)~Membrane response. (c)~Phase-locking adjacency (contextual; not used in this study). (d)~\BSC{} embedding projected to the first two principal components.}
 \label{fig:reservoir_dynamics}
 \end{figure*}
 
 \subsection{Baselines and Readout}
-The primary baseline consists of bandpower and ERP-derived features evaluated with the same subject-grouped validation protocol. A linear readout is used to test representational separability without confounding the result with a high-capacity classifier. Decision-tree and random-forest readouts are reserved for sensitivity checks.
+The primary baseline (A0) consists of spectral band-power features ($5$ bands $\times$ $34$ channels $=170$ dimensions) evaluated with the same subject-grouped protocol. To separate representational robustness from raw dimensionality, we add a dimensionality-matched control: the $170$-dimensional baseline randomly projected to $2176$ dimensions (Gaussian random projection). A balanced L2-regularized logistic readout is used throughout to test representational separability without a high-capacity classifier.
 
 \subsection{Perturbation Diagnostics}
-Two perturbation regimes are separated. Representation-level perturbations corrupt the extracted feature vector and test whether downstream classifiers are sensitive to feature-space noise and dropout. Raw-signal recomputation applies perturbations before feature extraction and recomputes the reservoir representation. The second regime is stricter because corruption propagates through reservoir dynamics before classification. Formally, a perturbation $\mathcal{P}_\eta$ is applied either to the signal, $X\mapsto\mathcal{P}_\eta(X)$ with $E=\Phi(\mathcal{P}_\eta(X))$, or to the representation, $E\mapsto\mathcal{P}_\eta(E)$, where $\eta$ indexes the amplitude-noise signal-to-noise ratio, the temporal-jitter offset, or the channel-dropout fraction.
-
-The perturbations are:
-\begin{itemize}
-    \item additive amplitude noise at multiple signal-to-noise ratios;
-    \item temporal jitter of ERP alignment windows;
-    \item channel dropout at increasing electrode-removal rates.
-\end{itemize}
-Performance is reported as balanced accuracy (BA) and macro-F1.
+Two perturbation regimes are separated. Representation-level perturbations corrupt the extracted feature vector; raw-signal recomputation applies perturbations before feature extraction and recomputes the reservoir representation, propagating corruption through reservoir dynamics. Formally, a perturbation $\mathcal{P}_\eta$ acts either on the representation, $E\mapsto\mathcal{P}_\eta(E)$, or on the observation model of Eq.~\eqref{eq:obs}: amplitude noise augments the measurement noise $\epsilon_t$, channel dropout zeroes rows of the measurement operator $H$, and temporal jitter shifts the sampling index of $x_t$. We apply additive amplitude noise (signal-to-noise ratios), temporal jitter of the alignment window, and channel dropout at increasing electrode-removal rates. Performance is balanced accuracy (BA) and macro-F1.
 
 \section{Experimental Protocol}
 \subsection{Dataset and Task}
-The experiments use a trial-averaged affective ERP dataset with 211 subjects after exclusion of one anomalous subject record. Each subject contributes three affective conditions: negative, neutral, and pleasant, yielding 633 subject-condition observations. The ERP traces contain 34 scalp channels downsampled to 256~Hz, with 256 post-stimulus samples per epoch, and are baseline-corrected relative to stimulus onset. Subject-level data are maintained in a restricted research environment; only aggregate, de-identified results are reported here. Table~\ref{tab:dataset} summarizes the dataset and evaluation protocol.
+The experiments use a trial-averaged affective ERP dataset with 211 subjects after exclusion of one anomalous subject record. Each subject contributes three affective conditions (negative, neutral, pleasant), yielding 633 subject-condition observations. The ERP traces contain 34 scalp channels downsampled to 256~Hz, with 256 post-stimulus samples per epoch, baseline-corrected relative to onset. Subject-level data are maintained in a restricted research environment; only aggregate, de-identified results are reported. Table~\ref{tab:dataset} summarizes the protocol.
 
 \begin{table}[t]
 \caption{Dataset and evaluation protocol summary.}
 \label{tab:dataset}
 \centering
+\small
 \begin{tabular}{ll}
 \toprule
 Item & Value \\
 \midrule
 Subjects (after exclusion) & 211 \\
-Excluded records & 1 (recording anomaly) \\
 Observations & 633 (subject $\times$ condition) \\
-Conditions & 3 (negative, neutral, pleasant) \\
-Channels & 34 \\
-Sampling rate & 256~Hz \\
-Post-stimulus samples & 256 \\
-Reservoir embedding dim. ($E$) & 2176 \\
-Validation & subject-grouped cross-validation \\
+Conditions & 3 (neg., neutral, pleasant) \\
+Channels / rate / samples & 34 / 256~Hz / 256 \\
+Baseline (A0) dim. & 170 ($5{\times}34$) \\
+Reservoir embedding ($E$) dim. & 2176 ($64{\times}34$) \\
+Validation & subject-grouped 5-fold CV \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-The three-class affective condition task tests whether the temporal representation separates ERP responses under subject-level validation.
 
 \subsection{Validation}
-All classifier evaluations use subject-level partitioning: observations from the same subject do not appear simultaneously in training and test folds. Reported metrics include balanced accuracy and macro-F1. For provenance, the clean A0 and A1 results, the A1 representation-level perturbations, and the fold-local PCA sensitivity were recomputed under this protocol; the raw-signal recomputation values and the baseline (A0) perturbation values are carried from prior validated aggregate outputs of the same pipeline and are not re-derived here.
-
-\subsection{Manuscript Boundary}
-The present paper isolates the reservoir temporal-encoding component. Graph-topological observables, structure--function coupling, and closed-loop evidence-accumulation analyses belong to other parts of the doctoral framework and are outside this submission.
+All results are computed under a single protocol: StratifiedGroupKFold (5 folds, seeds $42$--$46$), train-only standardization, and a balanced L2 logistic readout; observations from the same subject never span train and test. We report means with $95\%$ confidence intervals (CIs) over the 25 folds, and macro one-vs-rest AUC from pooled out-of-fold probabilities. Chance is calibrated by a label-permutation null (100 permutations).
 
 \section{Results}
-\subsection{Clean Subject-Level Classification}
+\subsection{Clean Classification and Controls}
 \label{sec:clean}
-Table~\ref{tab:clean} reports clean three-class affective condition performance for the classical baseline (A0) and the reservoir embedding (A1), both reproduced under the present subject-grouped protocol. Under clean static classification, conventional ERP-derived features remain competitive with the reservoir embedding.
+Table~\ref{tab:clean} reports clean three-class performance. The reservoir embedding (A1) does not exceed the classical baseline (A0); their CIs overlap. A label-permutation null gives BA $0.338\pm0.022$, so every configuration encodes genuine signal (A0 and A1 exceed the null by more than five standard deviations) but the clean separability is modest.
 
 \begin{table}[t]
-\caption{Clean subject-level affective condition performance.}
+\caption{Clean subject-level performance (mean $\pm$ 95\% CI over 25 folds). Permutation-null BA $=0.338\pm0.022$.}
 \label{tab:clean}
 \centering
-\begin{tabular}{lccc}
+\small
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{llccc}
 \toprule
-Configuration & Feature family & BA & Macro-F1 \\
+Cfg & Features & BA & F1 & AUC \\
 \midrule
-A0 & Classical bandpower/ERP & 0.485 & 0.483 \\
-A1 & Reservoir embedding $E$ & 0.463 & 0.460 \\
+A0 & Band-power (170) & $0.485\pm0.015$ & $0.483$ & $0.665$ \\
+A1 & Reservoir \BSC{} (2176) & $0.463\pm0.013$ & $0.460$ & $0.644$ \\
+-- & Reservoir BSC$_1$ (2176) & $0.467\pm0.011$ & $0.465$ & $0.646$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The reservoir does not outperform the classical baseline under clean conditions (Table~\ref{tab:clean}), so clean accuracy alone does not justify the spiking encoding.
+\emph{Temporal-binning ablation.} The single-bin total-count code (BSC$_1$) matches the six-bin code (\BSC{}) on clean classification ($0.467$ vs.\ $0.463$; Table~\ref{tab:clean}). Temporal bin granularity therefore does not improve clean separability over total spike count, and the operative factor is the fixed reservoir embedding rather than the binning.
 
-\emph{Fold-local PCA sensitivity.} Because the unsupervised projection of Eq.~\eqref{eq:operator} is fitted once over the pooled cohort, we test whether its transduction inflates performance by refitting it on each fold's training subjects only (Table~\ref{tab:pca}). The fold-local variant yields balanced accuracy $0.465$, macro-F1 $0.462$, and macro one-vs-rest AUC $0.649$, compared with $0.463$, $0.460$, and $0.644$ for the fixed global basis. The two projections produce indistinguishable performance under the tested protocol.
+\emph{Transduction and component controls.} A fold-local PCA refit (per-fold training subjects) leaves performance unchanged (Table~\ref{tab:pca}); varying the component count over $\{16,32,64,128\}$ keeps BA within $0.461$--$0.491$, so neither the transductive basis nor the $64$-component choice inflates results.
 
 \begin{table}[t]
-\caption{Fold-local PCA sensitivity for the reservoir embedding $E$ (A1) under the subject-grouped protocol. ROC-AUC is macro one-vs-rest from pooled out-of-fold probabilities.}
+\caption{Fold-local vs.\ global PCA for the reservoir embedding $E$ (A1). OvR-AUC is macro one-vs-rest from pooled out-of-fold probabilities.}
 \label{tab:pca}
 \centering
 \small
@@ -195,66 +175,60 @@ Fold-local (per-fold train) & 0.465 & 0.462 & 0.649 \\
 
 \subsection{Representation-Level Perturbation Response}
 \label{sec:perturb}
-Table~\ref{tab:repr_perturb} summarizes feature-space perturbation results. Under additive amplitude corruption, the classical bandpower baseline degrades from BA $0.485$ to $0.395$ at 5~dB. The reservoir embedding degrades from BA $0.463$ to $0.449$. A similar pattern holds under feature dropout: the reservoir embedding remains close to its clean value at 30\% dropout while the classical baseline drops to $0.408$.
+Under feature-space corruption (Table~\ref{tab:repr_perturb}), the band-power baseline degrades sharply---from BA $0.485$ to $0.395$ at 5~dB amplitude noise and to $0.408$ at 30\% channel dropout---while the reservoir embedding degrades little ($0.463\!\to\!0.449$ and $0.456$). Two controls show this gap is not an artifact of representation size. The dimensionality-matched random projection of A0 (2176-D) degrades under 5~dB noise to $0.399\pm0.013$, tracking A0 ($0.395$) rather than $E$ ($0.449$); and channel dropout is channel-matched (both use 34 channels). The single-bin BSC$_1$ embedding is equally robust ($0.452$ at 5~dB, $0.454$ at 30\% dropout), consistent with the binning playing no role.
 
 \begin{table}[t]
-\caption{Representation-level perturbation diagnostics.}
+\caption{Representation-level perturbation diagnostics (BA, mean $\pm$ 95\% CI). A0$^{\dagger}$ is the dimensionality-matched random projection of A0 to 2176-D.}
 \label{tab:repr_perturb}
 \centering
-\begin{tabular}{llccc}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
 \toprule
-Perturbation & Level & A0 BA & A1 BA & Difference \\
+Perturbation & A0 & A0$^{\dagger}$ (2176) & $E$ (A1) \\
 \midrule
-Clean & -- & 0.485 & 0.463 & -0.022 \\
-Amplitude noise & 5 dB & 0.395 & 0.449 & +0.054 \\
-Channel dropout & 30\% & 0.408 & 0.456 & +0.048 \\
+Clean & $0.485\pm0.015$ & $0.502\pm0.019$ & $0.463\pm0.013$ \\
+Amplitude, 5 dB & $0.395\pm0.016$ & $0.399\pm0.013$ & $0.449\pm0.012$ \\
+Dropout, 30\% & $0.408\pm0.022$ & -- & $0.456\pm0.013$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The spike-bin representation shows a different sensitivity profile from the classical baseline when corruption is applied after feature extraction: it is less sensitive to additive feature noise and dropout in this regime.
-
-\begin{figure*}[!t]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=0.95\textwidth]{ana03_robustness_degradation_curves_cropped.pdf}
-\caption{Perturbation response under controlled corruption. Balanced accuracy as a function of perturbation level for the reservoir embedding $E$ (A1) and the classical bandpower/ERP baseline (A0) under amplitude noise and channel dropout.}
+\caption{Perturbation response under controlled corruption. Balanced accuracy as a function of perturbation level for the reservoir embedding $E$ (A1) and the classical band-power/ERP baseline (A0) under amplitude noise and channel dropout.}
 \label{fig:perturbation}
 \end{figure*}
 
 \subsection{Raw-Signal Recomputed Perturbations}
-A stricter test corrupts the signal before feature extraction and recomputes the representation. Table~\ref{tab:raw_perturb} reports recomputation diagnostics. Temporal jitter and channel dropout produce larger degradation than the representation-level regime. This is expected: the reservoir state trajectory depends on the full temporal input sequence, so misalignment and channel removal alter the dynamical drive before spike counts are formed.
+A stricter test corrupts the signal before feature extraction and recomputes the embedding under the same protocol (Table~\ref{tab:raw_perturb}). Clean recomputation reproduces the embedding result ($0.465$). Temporal jitter is the most damaging perturbation ($0.465\!\to\!0.422$), with amplitude noise and channel dropout intermediate ($0.449$, $0.431$); all remain above the permutation null. The embedding is thus reasonably stable even when corruption enters before extraction, but temporal alignment is the dominant sensitivity, consistent with the dependence of the reservoir state trajectory on the input timing.
 
 \begin{table}[t]
-\caption{Raw-signal recomputation perturbation diagnostic.}
+\caption{Raw-signal recomputation diagnostics (mean $\pm$ 95\% CI over 25 folds).}
 \label{tab:raw_perturb}
 \centering
 \begin{tabular}{lcc}
 \toprule
 Condition & BA & Macro-F1 \\
 \midrule
-Clean recomputation subset & 0.433 & 0.426 \\
-Temporal jitter, $\pm 50$ ms & 0.389 & 0.352 \\
-Amplitude noise, 5 dB & 0.429 & 0.419 \\
-Channel dropout, 30\% & 0.362 & 0.233 \\
+Clean recomputation & $0.465\pm0.013$ & $0.462$ \\
+Temporal jitter, $\pm 50$ ms & $0.422\pm0.016$ & $0.379$ \\
+Amplitude noise, 5 dB & $0.449\pm0.018$ & $0.445$ \\
+Channel dropout, 30\% & $0.431\pm0.021$ & $0.402$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The two regimes produce different outcomes. The reservoir embedding is stable when the representation is corrupted after extraction, but its performance degrades when perturbations alter the temporal drive that determines reservoir state evolution. Preprocessing alignment and electrode availability remain critical.
-
-The degradation curves in Fig.~\ref{fig:perturbation} show the same separation: under amplitude noise and channel dropout, the reservoir embedding (A1) maintains a flatter balanced-accuracy profile than the classical baseline (A0).
-
 \section{Discussion}
-Conventional ERP-derived features remain competitive under clean static classification (Table~\ref{tab:clean}). The perturbation results, however, separate two operating regimes. When corruption is applied after feature extraction, the spike-bin embedding retains balanced accuracy more gradually than the classical baseline (Table~\ref{tab:repr_perturb}, Fig.~\ref{fig:perturbation}). When corruption enters before extraction---temporal jitter and channel removal that alter the reservoir's input trajectory---performance degrades more sharply (Table~\ref{tab:raw_perturb}). The encoding is therefore robust to post-hoc feature corruption but dependent on temporal alignment and electrode availability at acquisition time.
+The evidence supports a bounded reading. The fixed reservoir embedding encodes genuine affective-condition signal (well above the permutation null) but does not outperform a classical band-power baseline on clean static classification; the two are statistically indistinguishable. Its advantage is a distinct perturbation-response profile: under representation-level amplitude noise and channel dropout it degrades far less than the baseline, and two controls establish that this is not a measurement artifact---a dimensionality-matched random projection of the baseline degrades like the baseline, and the dropout comparison is channel-matched. Under raw-signal recomputation the embedding remains reasonably robust, with temporal jitter the dominant vulnerability, reflecting the reservoir's dependence on input timing.
 
-The fold-local PCA sensitivity analysis (Table~\ref{tab:pca}) confirms that the cohort-pooled projection does not inflate the reported reservoir-embedding performance under the tested protocol. The affective labels serve as an external task structure for testing separability; no diagnostic claim is made.
+A key negative result delimits the contribution: a single-bin total spike count (BSC$_1$) matches the six-bin code on clean classification and under every perturbation. Temporal bin granularity is therefore not the operative factor; the robustness is a property of the fixed reservoir state-space embedding and its unsupervised compression, not of the temporal binning. The audit framing---characterizing what a fixed encoding preserves under controlled corruption---is what the data support, rather than a claim that temporal structure per se confers an advantage.
 
-Several scope boundaries remain. The dataset is a single affective ERP cohort, and the results require external validation before generalization to other EEG paradigms. The study evaluates software-level representations, not neuromorphic hardware energy or latency, which would require measurement on dedicated platforms \cite{davies2018loihi,furber2014spinnaker}. The perturbation diagnostics are controlled tests, not substitutes for full acquisition-artifact conditions. Graph topology and structure--function coupling are not evaluated here.
+Several scope boundaries remain. The dataset is a single affective ERP cohort, and external validation is needed before generalization. The only comparator is a classical baseline; a modern deep baseline (e.g., EEGNet) under the same perturbation protocol is a natural next step. The study evaluates software-level representations, not neuromorphic hardware energy or latency, which would require measurement on dedicated platforms \cite{davies2018loihi,furber2014spinnaker}. The perturbation diagnostics are controlled tests, not substitutes for full acquisition artifacts, and graph topology and structure--function coupling are not evaluated here.
 
 \section{Conclusion}
-Under clean static classification, conventional ERP features remain competitive. The reservoir embedding defines a nonlinear temporal encoding with a distinct perturbation-response profile: it degrades more gradually than the classical baseline under representation-level amplitude noise and channel dropout, while remaining sensitive to temporal misalignment and channel loss when perturbations enter before feature extraction. Each \BSC{} component corresponds to a post-onset spike-count interval, and the fold-local PCA analysis confirms that the transductive basis does not inflate reported performance. The operating regime of the spiking encoding depends on the perturbation type and entry point.
-
-A vector camera-ready version of the pipeline figure should replace the current raster asset. Fold-local and full within-fold recomputation should extend to all descriptor streams beyond the embedding evaluated here. Multi-cohort and multi-paradigm validation is required before the operating-regime characterization generalizes. Any claim of neuromorphic efficiency requires direct hardware latency and energy measurement, which this software study does not provide.
+A fixed spiking-reservoir state-space embedding of affective ERPs encodes genuine but modest condition signal and does not beat a classical band-power baseline on clean classification. Its distinguishing property is perturbation robustness: under representation-level amplitude noise and channel dropout it degrades far less than the baseline, and dimensionality-matched and channel-matched controls show this is not an artifact of representation size. A single-bin spike-count ablation shows the robustness comes from the reservoir embedding rather than temporal bin granularity, and the embedding's chief vulnerability is temporal misalignment at acquisition. These results characterize the operating regime of a fixed reservoir encoding for affective ERP analysis. Future work should add modern deep baselines under the same perturbation protocol, test multi-cohort generalization, and examine whether alternative spiking codes recover a temporal-structure advantage that simple binning does not.
 
 \textbf{Data Availability and Scope.} The EEG/ERP data used in this study are access-controlled research data and are not redistributed with this submission. Analyses are reported only as aggregate, de-identified results. Clinical labels, where present in the source cohort, are used only to define biomedical signal-analysis context and are not interpreted as diagnostic decisions.
 
