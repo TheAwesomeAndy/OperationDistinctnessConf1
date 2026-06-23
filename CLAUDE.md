@@ -6,7 +6,7 @@ Repository: `OperationDistinctnessConf1`
 
 Target paper:
 
-**Binned Spiking Reservoir Encoding for Perturbation-Characterized Affective EEG Signal Analysis**
+**Spiking Reservoir State-Space Encoding for Perturbation-Characterized Affective EEG Signal Analysis**
 
 Submission target: IEEE BIBM 2026 Doctoral Forum route, written as a standard IEEE BIBM proceedings paper.
 
@@ -228,6 +228,6 @@ Eligibility and Doctoral Forum routing belong in cover materials, not the scient
 
 Use conditional eligibility language if needed:
 
-“First author and primary contributor; Ph.D. candidate/recently defended doctoral researcher in Electrical and Computer Engineering at Stony Brook University, with degree conferral status to be stated accurately at submission.”
+“First author and primary contributor; Ph.D. student in Electrical and Computer Engineering at Stony Brook University.”
 
 Do not invent awards, dates, roles, affiliations, or status.

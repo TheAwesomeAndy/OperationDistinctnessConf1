@@ -1,56 +1,81 @@
-% One-page CV appendix template for the BIBM 2026 Doctoral Forum submission package.
-% Append after the paper PDF if required by the portal. Keep to one page.
-% [TODO] tags mark facts that must be verified/filled by the author before submission.
-
 \documentclass[10pt]{article}
-\usepackage[margin=0.65in]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper,top=0.55in,bottom=0.55in,left=0.65in,right=0.65in]{geometry}
+\usepackage{titlesec}
 \usepackage{enumitem}
-\pagenumbering{gobble}
-\setlist[itemize]{leftmargin=*, itemsep=1pt, topsep=2pt}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.8pt}
+\setlist[itemize]{leftmargin=*,topsep=1pt,itemsep=1pt,parsep=0pt,partopsep=0pt}
+
+\titleformat{\section}{\normalfont\normalsize\bfseries}{}{0pt}{}[\vspace{1pt}\titlerule]
+\titlespacing*{\section}{0pt}{5pt}{2pt}
+
+\newcommand{\entry}[2]{\textbf{#1}\hfill #2\\}
+\newcommand{\pub}[1]{\noindent\hangindent=0.35cm #1\par\vspace{2pt}}
 
 \begin{document}
 
 \begin{center}
-{\Large \textbf{Andrew A. Lane}}\\
-Electrical and Computer Engineering, Stony Brook University\\
-Email: [TODO: email] \quad Web: [TODO: website or GitHub]
+{\Large Andrew A. Lane}\\[-1pt]
+{\small \href{mailto:Andrew.A.Lane@Stonybrook.edu}{Andrew.A.Lane@Stonybrook.edu}}
 \end{center}
 
-\noindent
-First author, primary contributor, and intended presenter of the submitted manuscript.
-Ph.D.\ candidate/recently defended doctoral researcher in Electrical and Computer Engineering
-at Stony Brook University, with degree conferral status to be stated accurately at submission.
-
 \section*{Education}
-\textbf{Stony Brook University}, Ph.D., Electrical and Computer Engineering.
-Degree conferral status and date: [TODO: insert exact administrative status and date].
+\entry{Stony Brook University}{Anticipated 2026}
+Ph.D., Electrical and Computer Engineering. Research focus: neuromorphic signal processing and EEG/ERP representation analysis. Advisor: Wendy Tang; committee/collaborator: Brady D. Nelson.
 
-\section*{Research Interests}
-Neuromorphic signal processing; EEG/ERP analysis; spiking neural networks; reservoir computing;
-graph signal processing; biomedical data science.
+\entry{New York Institute of Technology}{2010}
+M.S., Electrical and Computer Engineering.
 
-\section*{Dissertation}
-\textbf{Title:} [TODO: insert official dissertation title]\\
-\textbf{Advisors/committee:} [TODO: insert names]\\
-\textbf{Summary:} Development and evaluation of neuromorphic signal-processing operators for
-extracting temporal, spatial, and structured observables from affective ERP data.
+\entry{Hofstra University}{2008}
+B.S., Biomedical and Electrical Engineering.
 
-\section*{Selected Publications and Manuscripts}
+
+\section*{Research Experience}
+\entry{Doctoral Researcher, Stony Brook University}{2019--Present}
+Developed ARSPI-Net, a staged neuromorphic signal-processing framework for EEG/ERP analysis. Doctoral work models affective neural data as noisy, partially observed outputs of biological dynamical systems.
+
+\entry{Bioinformatics Analyst, Feinstein Institute for Medical Research}{2011--2014}
+Developed laboratory-automation robotics software and research data-management systems.
+
+\entry{Research Analyst, Rockefeller University}{2008--2011}
+Developed automation and robotics programming for high-throughput screening workflows.
+
+\section*{Teaching and Academic Appointments}
+\entry{Teaching Professor, St. Joseph's University}{2019--Present}
+Department of Mathematics and Computer Science. Teaching areas include artificial intelligence, data structures and algorithms, operating systems, computer networking, information security, computer forensics, programming, discrete mathematics, and computer architecture.
+
+\entry{Adjunct Instructor, St. Joseph's University}{2014--2019}
+Department of Mathematics and Computer Science.
+
+\entry{Adjunct Instructor, Hofstra University}{2017--Present}
+Computer science and engineering instruction.
+
+\entry{Adjunct Assistant Professor, Farmingdale State College}{2014--Present}
+Computer science and engineering instruction.
+
+\entry{Instructor, Stony Brook University}{2022--2025}
+Department of Electrical Engineering.
+
+\section*{Selected Publications}
+\pub{A. Lane, W. Tang, and B. Nelson, ``Towards ARSPI-Net: Advancing EEG Feature Extraction with Neuromorphic Algorithms,'' \textit{2024 IEEE Long Island Systems, Applications and Technology Conference (LISAT)}, pp. 1--8, 2024. doi:10.1109/LISAT63094.2024.10808138.}
+
+\pub{A. Lane, W. Tang, and B. Nelson, ``Towards ARSPI-Net: Development of an Efficient Hybrid Deep Learning Framework,'' \textit{2023 IEEE Long Island Systems, Applications and Technology Conference (LISAT)}, pp. 1--8, 2023. doi:10.1109/LISAT58403.2023.10179592.}
+
+\section*{Selected Talks, Mentoring, and Service}
 \begin{itemize}
-    \item A. A. Lane, W. Tang, and B. D. Nelson, ``Binned Spiking Reservoir Encoding for
-    Perturbation-Characterized Affective EEG Signal Analysis,'' submitted to IEEE BIBM 2026
-    (first author and primary contributor).
-    \item Additional papers: [TODO: insert accepted or submitted papers, if any.]
-\end{itemize}
-
-\section*{Research and Teaching Experience}
-\begin{itemize}
-    \item Graduate researcher in neuromorphic signal processing and affective ERP analysis.
-    \item Teaching/instructional roles: [TODO: insert institution and dates, if applicable.]
+\item Guest lecture: \textit{One Spike at a Time: Transcending the von Neumann Bottleneck in Neuromorphic Computing}, New York University, 2026.
+\item Guest lecture: \textit{Understanding High-Dimensional Signals Using Higher Dimensions? The Weird World of Neuromorphic Engineering}, University of Connecticut, 2025.
+\item Faculty advisor, Upsilon Pi Epsilon Computer Science Honor Society, St. Joseph's University.
+\item Undergraduate research mentor for projects in neural machine translation, visual speech recognition, affective computing, and AI bias.
 \end{itemize}
 
 \section*{Technical Skills}
-Python; PyTorch; spiking neural networks; reservoir computing; EEG/ERP preprocessing;
-graph modeling; statistical validation; LaTeX; reproducible research workflows.
+Neuromorphic computing; spiking neural networks; liquid-state machines; reservoir computing; graph neural networks; EEG/ERP signal processing; perturbation analysis; dimensionality reduction; Python; machine learning; LaTeX.
 
 \end{document}
