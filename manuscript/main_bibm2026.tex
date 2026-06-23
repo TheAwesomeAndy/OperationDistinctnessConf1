@@ -63,7 +63,7 @@ ERP and EEG analysis have traditionally relied on time-window amplitudes and lat
 
 Reservoir computing offers an alternative in which a high-dimensional recurrent dynamical system transforms an input sequence into a separable state trajectory \cite{maass2002real,jaeger2001echo,jaeger2004harnessing,lukosevicius2009reservoir}. In liquid state machines, recurrent spiking dynamics induce a nonlinear temporal basis on which a simple readout is trained; related spiking models encode information in spike timing and counts \cite{diehl2015unsupervised,roy2019towards}. This separation of fixed dynamics from a trained readout is attractive for biomedical signal analysis because the reservoir can be studied as a measurement operator rather than as a fully optimized black-box classifier.
 
-Spiking and deep networks have been applied to EEG and ERP signals \cite{gong2023sglnet,lawhern2018eegnet,craik2019deep}, but most studies emphasize endpoint accuracy, while preprocessing and acquisition choices that strongly affect EEG representations are often under-examined \cite{delpup2025preprocessing}. For perturbation-sensitive physiological data, accuracy alone is insufficient: a representation should also be assessed through subject-level generalization, controlled corruption, and representation-geometry analysis \cite{kornblith2019similarity}. This paper adopts that operating-regime perspective for a fixed reservoir encoding.
+Spiking and deep networks have been applied to EEG and ERP signals \cite{gong2023sglnet,lawhern2018eegnet,craik2019deep}, but most studies emphasize endpoint accuracy, while preprocessing and acquisition choices that strongly affect EEG representations are often under-examined \cite{delpup2025preprocessing}. For perturbation-sensitive physiological data, accuracy alone is insufficient: a representation should also be assessed through subject-level generalization, controlled corruption, and representation-geometry analysis \cite{kornblith2019similarity}. Prior work in the ARSPI-Net line developed neuromorphic reservoir feature extraction for affective EEG \cite{lane2023arspi,lane2024arspi}; the present paper isolates and audits its spiking temporal-encoding component as a measurement operator. This paper adopts that operating-regime perspective for a fixed reservoir encoding.
 
 \section{Methods}
 \label{sec:methods}
@@ -320,6 +320,12 @@ M. Davies \emph{et al.}, ``Loihi: A neuromorphic manycore processor with on-chip
 
 \bibitem{furber2014spinnaker}
 S. B. Furber, F. Galluppi, S. Temple, and L. A. Plana, ``The SpiNNaker project,'' \emph{Proceedings of the IEEE}, vol. 102, no. 5, pp. 652--665, 2014.
+
+\bibitem{lane2023arspi}
+A. Lane, W. Tang, and B. Nelson, ``Towards ARSPI-Net: Development of an efficient hybrid deep learning framework,'' in \emph{Proc. IEEE Long Island Systems, Applications and Technology Conf. (LISAT)}, Old Westbury, NY, USA, 2023, pp. 1--8.
+
+\bibitem{lane2024arspi}
+A. Lane, W. Tang, and B. Nelson, ``Towards ARSPI-Net: Advancing EEG feature extraction with neuromorphic algorithms,'' in \emph{Proc. IEEE Long Island Systems, Applications and Technology Conf. (LISAT)}, Holtsville, NY, USA, 2024, pp. 1--8.
 
 \end{thebibliography}
 
