@@ -91,6 +91,13 @@ E=\phi_{\mathrm{PCA}}\!\big([b_1,\dots,b_6]\big)=\Phi(X),
 \end{equation}
 so that $E=\Phi(X)$ is a fixed, label-free observable of the input. The principal-component projection is estimated once, unsupervised and without affective labels, over the spike-bin vectors pooled across all observations and electrodes; because the basis is fitted on every subject---including those later held out---it is transductive with respect to subject inclusion, and we report it as a fixed representation audit rather than leakage-free preprocessing (bounded by the fold-local control in Sec.~\ref{sec:clean}). As a temporal-structure control, we also form a single-bin code (BSC$_1$, the total post-onset spike count per unit) processed through the identical PCA pipeline. This window is an early, compact interval that excludes the later P300/LPP ranges available to the ERP-window baseline (Sec.~\ref{sec:methods}); the clean-classification comparison is therefore conservative for the reservoir.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_reservoir_dynamics_inscope.pdf}
+\caption{Reservoir-derived objects for the three affective conditions: (a)~LIF spike raster (shaded $=$ the $t\in[10,70]$ analysis window); (b)~membrane response; (c)~\BSC{} embedding in its first two principal components.}
+\label{fig:resdyn}
+\end{figure}
+
 
 \subsection{Baselines and Readout}
 Two classical baselines are evaluated under the same subject-grouped protocol. The band-power baseline (A0) uses spectral band-power features ($5$ bands $\times$ $34$ channels $=170$ dimensions). The ERP-window baseline (A0$_e$) uses mean amplitude in three post-stimulus windows---early ($80$--$200$~ms), P300 ($250$--$450$~ms), and late positive potential ($450$--$800$~ms)---per channel ($3 \times 34 = 102$ dimensions). To separate representational robustness from raw dimensionality, we add a dimensionality-matched control: A0 randomly projected to $2176$ dimensions (Gaussian random projection, averaged over five random seeds). The band-power, ERP-window, and reservoir representations use a balanced L2-regularized logistic readout to test separability without a high-capacity classifier.
@@ -183,7 +190,7 @@ Under \emph{amplitude} noise the accuracy ranking is preserved and degradation i
 
 \emph{Generality.} The mean-minus-zero gap predicted by Eq.~\eqref{eq:noninv} is $+0.034$ (ERP-window), $+0.023$ (band-power), and only $+0.005$ (reservoir) at $30\%$ dropout: it tracks feature non-centeredness and vanishes for the PCA-centered embedding, as predicted. The effect is not specific to mean imputation or to one dropout rate (Fig.~\ref{fig:impute}). Across $10$--$50\%$ dropout every in-distribution fill (mean, kNN, spatial) raises the non-centered encoders---by up to $0.11$~BA for ERP-window under kNN---while leaving the reservoir within $0.04$~BA of its zero-imputation value. Consequently the reservoir's naive lead does not survive: at $30\%$ dropout ERP-window significantly exceeds the reservoir under kNN ($0.562$ vs.\ $0.491$, $p{=}2\times10^{-5}$) and spatial fills ($0.516$ vs.\ $0.462$, $p{=}10^{-3}$) and matches it under mean imputation ($p{=}0.06$), whereas under zero-imputation the two are statistically tied ($p{=}0.8$).
 
-\emph{Training confound.} The trained EEGNet's apparent dropout fragility ($0.554$, $78\%$ raw retention) is largely a training choice. Re-training with channel-dropout and amplitude-noise augmentation recovers dropout BA to $0.674$ (from $0.554$; $96\%$ retention) while preserving clean accuracy ($0.703$), so for a trained model robustness is contributed mainly by training rather than by the representation (Table~\ref{tab:dropconf}, +aug.\ row).
+\emph{Training confound.} The trained EEGNet's apparent dropout fragility ($0.554$, $78\%$ raw retention) is largely a training choice. Re-training with channel-dropout and amplitude-noise augmentation recovers dropout BA to $0.674$ (from $0.554$; $96\%$ retention) while preserving clean accuracy ($0.703$), so for a trained model robustness is contributed mainly by training rather than by the representation (Fig.~\ref{fig:deapaug}b).
 
 \emph{Other controls.} A dimensionality-matched random projection of band-power (2176-D, five seeds) gives clean BA $0.501\pm0.002$ but collapses to $0.399\pm0.008$ at $5$~dB, tracking band-power rather than the reservoir, so the reservoir's robustness is not a dimensionality effect.
 
@@ -217,23 +224,14 @@ Reservoir & $0.463$ & $0.456$ & $0.461$ & $99\%$ & $98\%$ \\
 
 \subsection{External Replication on an Independent Affective Dataset}
 \label{sec:deap}
-To test whether the imputation confound is specific to our cohort, we replicate it on DEAP~\cite{koelstra2012deap}, an independent affective EEG dataset (32 subjects, 40 trials each), using band-power features and a binary valence task under the standard within-subject protocol (per-subject stratified $5$-fold; DEAP band-power is at chance cross-subject). The confound reproduces and is larger than on our cohort (Table~\ref{tab:deap}): at $30\%$ dropout band-power scores BA $0.540$ under zero-imputation but $0.621$--$0.638$ under mean or $k$NN imputation. With a clean BA of $0.639$, zero-imputation reports a $0.10$ BA loss where $k$NN reports essentially none, so the measured channel-dropout robustness of the \emph{same} features swings by up to $0.11$ BA with the imputation convention alone---on a second dataset, task, and electrode montage. The imputation confound is therefore not an artifact of our cohort but a general property of how channel-dropout robustness is scored.
+To test whether the imputation confound is specific to our cohort, we replicate it on DEAP~\cite{koelstra2012deap}, an independent affective EEG dataset (32 subjects, 40 trials each), using band-power features and a binary valence task under the standard within-subject protocol (per-subject stratified $5$-fold; DEAP band-power is at chance cross-subject). The confound reproduces and is larger than on our cohort (Fig.~\ref{fig:deapaug}a): at $30\%$ dropout band-power scores BA $0.540$ under zero-imputation but $0.621$--$0.638$ under mean or $k$NN imputation. With a clean BA of $0.639$, zero-imputation reports a $0.10$ BA loss where $k$NN reports essentially none, so the measured channel-dropout robustness of the \emph{same} features swings by up to $0.11$ BA with the imputation convention alone---on a second dataset, task, and electrode montage. The imputation confound is therefore not an artifact of our cohort but a general property of how channel-dropout robustness is scored.
 
-\begin{table}[t]
-\caption{External replication on DEAP~\cite{koelstra2012deap} (independent affective EEG; 32 subjects, within-subject binary valence; band-power features; clean BA $=0.639$). Channel-dropout BA under three imputation rules; the rule alone moves BA by up to $0.11$.}
-\label{tab:deap}
+\begin{figure}[t]
 \centering
-\small
-\begin{tabular}{lccc}
-\toprule
-Channel dropout & Zero-imp. & Mean-imp. & kNN-imp. \\
-\midrule
-10\% & $0.581$ & $0.632$ & $0.638$ \\
-30\% & $0.540$ & $0.621$ & $0.638$ \\
-50\% & $0.525$ & $0.609$ & $0.630$ \\
-\bottomrule
-\end{tabular}
-\end{table}
+\includegraphics[width=\columnwidth]{fig_deap_aug.pdf}
+\caption{(a)~External replication on DEAP~\cite{koelstra2012deap} (32 subjects, within-subject binary valence, band-power; clean BA $0.639$): channel-dropout BA under three imputation rules---zero-imputation collapses while mean/$k$NN hold, so the imputation rule alone moves BA by up to $0.11$. (b)~Training confound: a trained EEGNet's dropout fragility ($0.554$) is largely removed by channel-dropout augmentation ($0.674$) with clean accuracy preserved.}
+\label{fig:deapaug}
+\end{figure}
 
 \section{Discussion}
 Channel-dropout robustness comparisons of EEG representations are dominated by two evaluation choices and, for trained models, by augmentation. Raw retention rewards low-accuracy representations through an accuracy-floor effect; zero-imputation of dropped channels injects out-of-distribution values that penalize non-centered features; and augmentation, not the representation, supplies most of a trained model's dropout robustness. Correcting these factors changes the conclusion: the naive protocol declares the near-chance fixed reservoir the most channel-robust representation, whereas the corrected protocol ranks ERP-window features highest among the fixed encoders and yields an augmented EEGNet that is simultaneously the most accurate and the most channel-robust. The fixed, training-free reservoir is valuable here precisely because it is accuracy- and imputation-invariant: it is a reference that exposes the artifacts affecting the other encoders, not a competitive classifier. A single-bin ablation (BSC$_1$ matches \BSC{}) and a dimensionality-matched random projection further show the reservoir's behavior is driven by the fixed state-space expansion, not by bin granularity or dimensionality.
