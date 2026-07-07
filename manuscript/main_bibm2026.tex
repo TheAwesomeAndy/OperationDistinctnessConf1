@@ -89,14 +89,14 @@ Post-onset activity is summarized by six equal temporal bins over the window $t\
 \begin{equation}\label{eq:operator}
 E=\phi_{\mathrm{PCA}}\!\big([b_1,\dots,b_6]\big)=\Phi(X),
 \end{equation}
-so that $E=\Phi(X)$ is a fixed, label-free observable of the input. The principal-component projection is estimated once, unsupervised and without affective labels, over the spike-bin vectors pooled across all observations and electrodes; because the basis is fitted on every subject---including those later held out---it is transductive with respect to subject inclusion, and we report it as a fixed representation audit rather than leakage-free preprocessing (bounded by the fold-local control in Sec.~\ref{sec:clean}). As a temporal-structure control, we also form a single-bin code (BSC$_1$, the total post-onset spike count per unit) processed through the identical PCA pipeline. This window is an early, compact interval that excludes the later P300/LPP ranges available to the ERP-window baseline (Sec.~\ref{sec:methods}); the clean-classification comparison is therefore conservative for the reservoir.
+so $E=\Phi(X)$ is a fixed, label-free observable. The PCA basis is fitted once, unsupervised, over spike-bin vectors pooled across all subjects, hence transductive with respect to subject inclusion (bounded by the fold-local control in Sec.~\ref{sec:clean}). A single-bin control (BSC$_1$, total post-onset spike count) uses the identical pipeline. The $t\in[10,70]$ window is early and compact, excluding the later P300/LPP ranges the ERP-window baseline sees, so the clean comparison is conservative for the reservoir.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_reservoir_dynamics_inscope.pdf}
-\caption{Reservoir-derived objects for the three affective conditions: (a)~LIF spike raster (shaded $=$ the $t\in[10,70]$ analysis window); (b)~membrane response; (c)~\BSC{} embedding in its first two principal components.}
+\includegraphics[width=0.84\textwidth]{fig_reservoir_dyn.pdf}
+\caption{The fixed LIF reservoir as a dynamical system (montage-free, model-supported). (a)~Spike raster (shaded $=$ the $t\in[10,70]$ analysis window). (b)~Population state-space trajectory---the first three principal components of the $256$-unit membrane state---for the three affective conditions; each starts at a marker and settles onto a shared low-dimensional manifold. (c)~Eigenvalue spectrum of the recurrent weight matrix filling the disk of spectral radius $\rho=0.9$ (dashed) within the unit circle, i.e.\ operation at the edge of stability. (d)~Recurrence plot of the state trajectory, exposing its temporal structure.}
 \label{fig:resdyn}
-\end{figure}
+\end{figure*}
 
 
 \subsection{Baselines and Readout}
@@ -148,14 +148,8 @@ All results are computed under a single protocol: StratifiedGroupKFold (5 folds,
 \section{Results}
 \subsection{Clean Classification and Controls}
 \label{sec:clean}
-Table~\ref{tab:clean} reports clean three-class performance, and Fig.~\ref{fig:overview} shows the full accuracy landscape under clean, amplitude-noise, and (naive, zero-imputed) channel-dropout conditions. The trained EEGNet is the most accurate representation (BA $0.711$); among the fixed encoders, ERP-window features lead (A0$_e$, $0.616$), above band-power (A0, $0.485$) and the reservoir embedding (A1, $0.463$). A label-permutation null gives BA $0.338\pm0.022$, so every configuration encodes genuine signal (all exceed the null by more than five standard deviations) while the absolute clean separability of the fixed encoders remains modest.
+Table~\ref{tab:clean} reports clean three-class performance. The trained EEGNet is the most accurate representation (BA $0.711$); among the fixed encoders, ERP-window features lead (A0$_e$, $0.616$), above band-power (A0, $0.485$) and the reservoir embedding (A1, $0.463$). A label-permutation null gives BA $0.338\pm0.022$, so every configuration encodes genuine signal (all exceed the null by more than five standard deviations) while the absolute clean separability of the fixed encoders remains modest.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.92\columnwidth]{ana03_robustness_inscope.pdf}
-\caption{Accuracy landscape under clean, $5$~dB amplitude-noise, and $30\%$ channel-dropout conditions (mean, 95\% CI over 25 folds; dropout uses the naive zero-imputation). EEGNet is most accurate throughout; among the fixed encoders the reservoir is least accurate but least degraded, ERP-window strongest on clean data. Sec.~\ref{sec:perturb} shows that the dropout ordering here is an evaluation artifact.}
-\label{fig:overview}
-\end{figure}
 
 \begin{table}[t]
 \caption{Clean subject-level performance (mean $\pm$ 95\% CI over 25 folds). Permutation-null BA $=0.338\pm0.022$.}
@@ -238,12 +232,12 @@ Channel-dropout robustness comparisons of EEG representations are dominated by t
 
 These findings motivate a minimal reporting protocol for EEG robustness studies: report above-chance retention alongside raw retention; state and vary the channel-imputation rule (zero vs.\ mean or removal); and, for trained models, report robustness with and without augmentation. Each is a one-line change, yet each materially affects the ranking.
 
-Several boundaries remain. The primary cohort is a single trial-averaged affective-ERP dataset; the imputation confound, however, follows from a deterministic property of standardized readouts (Eq.~\eqref{eq:noninv}) rather than from the data, and it held across three in-distribution imputation rules, five dropout rates, and an independent affective dataset (DEAP; Sec.~\ref{sec:deap}). DEAP is continuous video-elicited affect scored with band-power under a within-subject protocol, so paradigm-matched multi-cohort ERP validation remains valuable, but the confound's generality across datasets, tasks, and montages is now demonstrated. EEGNet is perturbed at its raw input while the fixed-feature comparisons are feature-level, so the cross-family comparison is approximate, though the input-level reservoir check (Sec.~\ref{sec:perturb}) and the augmentation analysis bracket this gap. We study amplitude noise and channel dropout; adversarial attacks and montage shifts are future work; graph topology and structure--function coupling are out of scope.
+Several boundaries remain. The primary cohort is a single trial-averaged affective-ERP dataset; the confound, however, follows from a deterministic property of standardized readouts (Eq.~\eqref{eq:noninv}) and held across three imputation rules, five dropout rates, and an independent affective dataset (DEAP), so its generality across datasets, tasks, and montages is demonstrated, though paradigm-matched multi-cohort ERP validation remains valuable. EEGNet is perturbed at its raw input while the fixed-feature comparisons are feature-level, so the cross-family comparison is approximate. Adversarial attacks and montage shifts are future work; graph topology and coupling are out of scope.
 
 \section{Conclusion}
-Channel-dropout robustness rankings of affective-ERP representations are confounded by the accuracy floor, by zero-imputation of dropped channels, and---for trained models---by the absence of augmentation. Using a fixed, training-free spiking reservoir as an accuracy- and imputation-invariant reference, we showed that correcting these confounds reverses the naive ranking: the reservoir's apparent channel-robustness advantage is largely an evaluation artifact, ERP-window features become the most robust fixed encoder under corrected imputation, and a trained EEGNet with standard augmentation is both the most accurate and the most channel-robust. We recommend reporting above-chance retention, the channel-imputation rule, and the augmentation state in EEG robustness studies. Future work extends the audit to multi-cohort data and additional perturbation families.
+Channel-dropout robustness rankings of affective-ERP representations are confounded by the accuracy floor, by zero-imputation of dropped channels, and---for trained models---by missing augmentation. Using a fixed, training-free reservoir as an accuracy- and imputation-invariant reference, correcting these confounds reverses the naive ranking, and the confound replicates on the independent DEAP dataset. We recommend reporting above-chance retention, the imputation rule, and the augmentation state in EEG robustness studies. Future work extends the audit to multi-cohort ERP data.
 
-\textbf{Data Availability and Scope.} The EEG/ERP data used in this study are access-controlled research data and are not redistributed with this submission. Analyses are reported only as aggregate, de-identified results. Clinical labels, where present in the source cohort, are used only to define biomedical signal-analysis context and are not interpreted as diagnostic decisions.
+\textbf{Data Availability.} The primary EEG/ERP data are access-controlled and not redistributed; only aggregate de-identified results are reported. DEAP is public~\cite{koelstra2012deap}. Clinical labels, where present, are context variables only and are not interpreted as diagnostic.
 
 \begin{thebibliography}{99}
 
