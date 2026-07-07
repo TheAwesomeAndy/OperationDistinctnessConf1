@@ -59,11 +59,9 @@ This paper asks whether reported channel-dropout robustness rankings of affectiv
 Clinical labels and affective categories define the external task structure; the representations are the object of study.
 
 \section{Related Work}
-ERP and EEG analysis have traditionally relied on time-window amplitudes and latencies, time-domain descriptors such as Hjorth parameters \cite{hjorth1970eeg}, spectral and wavelet summaries \cite{subasi2007eeg}, and linear statistical models \cite{blankertz2011singletrial}. These features are interpretable and correspond to known components such as the P300 and late positive potential, and source-level analyses show that evoked responses carry structured temporal dynamics \cite{makeig2002dynamic}. Fixed handcrafted windows may, however, underrepresent nonlinear temporal interactions and can be sensitive to subject-specific variability.
+ERP/EEG analysis traditionally uses time-window amplitudes and latencies, Hjorth \cite{hjorth1970eeg} and wavelet/spectral descriptors \cite{subasi2007eeg}, and linear models \cite{blankertz2011singletrial}, which are interpretable (P300, late positive potential) \cite{makeig2002dynamic} but can underrepresent nonlinear temporal interactions. Reservoir computing offers an alternative: a high-dimensional recurrent dynamical system maps the input to a separable state trajectory read out by a simple classifier \cite{maass2002real,jaeger2001echo,jaeger2004harnessing,lukosevicius2009reservoir}, and spiking liquid-state machines encode information in spike timing and counts \cite{diehl2015unsupervised,roy2019towards}. Fixing the dynamics and training only the readout lets the reservoir be studied as a measurement operator rather than a black-box classifier.
 
-Reservoir computing offers an alternative in which a high-dimensional recurrent dynamical system transforms an input sequence into a separable state trajectory \cite{maass2002real,jaeger2001echo,jaeger2004harnessing,lukosevicius2009reservoir}. In liquid state machines, recurrent spiking dynamics induce a nonlinear temporal basis on which a simple readout is trained; related spiking models encode information in spike timing and counts \cite{diehl2015unsupervised,roy2019towards}. This separation of fixed dynamics from a trained readout is attractive for biomedical signal analysis because the reservoir can be studied as a measurement operator rather than as a fully optimized black-box classifier.
-
-Spiking and deep networks have been applied to EEG and ERP signals \cite{gong2023sglnet,lawhern2018eegnet,craik2019deep}, but most studies emphasize endpoint accuracy, while preprocessing and acquisition choices that strongly affect EEG representations are often under-examined \cite{delpup2025preprocessing}. For perturbation-sensitive physiological data, accuracy alone is insufficient: a representation should also be assessed through subject-level generalization, controlled corruption, and representation-geometry analysis \cite{kornblith2019similarity}. Prior work in the ARSPI-Net line developed neuromorphic reservoir feature extraction for affective EEG \cite{lane2023arspi,lane2024arspi}.
+Spiking and deep networks are widely applied to EEG \cite{gong2023sglnet,lawhern2018eegnet,craik2019deep}, but most work emphasizes endpoint accuracy while under-examining preprocessing and acquisition choices \cite{delpup2025preprocessing,kornblith2019similarity}; prior ARSPI-Net work developed neuromorphic reservoir features for affective EEG \cite{lane2023arspi,lane2024arspi}.
 
 Robustness of EEG models to noise, artifacts, and electrode loss is increasingly evaluated. Dynamic spatial filtering handles missing or corrupted channels with a learned channel-attention front end \cite{banville2022dsf}, and channel-dropout and amplitude-noise augmentation are standard ways to harden trained models \cite{rommel2022augment}. A recent benchmark of EEG foundation models reports that no single model is most robust to all perturbations and that much of the apparent channel-dropout fragility disappears when dropped channels are removed rather than zero-padded \cite{sirca2026beyond}---showing that perturbation \emph{methodology} shapes the conclusions. We extend this observation in ways the prior work does not: we identify an \emph{accuracy-floor} confound (relative-retention metrics reward low-accuracy representations), quantify a \emph{zero-imputation} confound for fixed-feature representations, and use a fixed, training-free reservoir as an accuracy-invariant reference that separates robustness contributed by the representation from robustness contributed by training. We then show that the naive ranking of channel-dropout robustness reverses once these confounds are corrected.
 
@@ -78,7 +76,7 @@ Let $X_s^{(c)}\in\R^{C\times T}$ denote the trial-averaged ERP observation for s
 where $\xi_t$ is the latent neural state, $H$ is a measurement operator induced by scalp observation, and $\epsilon_t$ captures measurement and preprocessing noise. The perturbations below act directly on this observation model (Sec.~\ref{sec:perturb}).
 
 \subsection{Spiking Reservoir Encoding}
-For each electrode trace, the signal is passed through a fixed LIF reservoir of $256$ neurons with recurrent weights $W$ scaled to spectral radius $\rho=0.9$ (near the edge of stability), input weights $W_{\mathrm{in}}$, leak parameter $\beta=0.05$, and firing threshold $\vartheta$. A compact discrete-time representation is
+For each electrode trace, the signal is passed through a fixed LIF reservoir of $256$ neurons with recurrent weights $W$ scaled to spectral radius $\rho=0.9$ (near the edge of stability; Fig.~\ref{fig:resdyn}d), input weights $W_{\mathrm{in}}$, leak parameter $\beta=0.05$, and firing threshold $\vartheta$. A compact discrete-time representation is
 \begin{align}
     v_{t+1} &= \beta v_t + W z_t + W_{\mathrm{in}}x_t - \vartheta r_t, \\
     z_{t+1} &= \Ind[v_{t+1}\geq \vartheta],
@@ -93,10 +91,11 @@ so $E=\Phi(X)$ is a fixed, label-free observable. The PCA basis is fitted once, 
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.84\textwidth]{fig_reservoir_dyn.pdf}
-\caption{The fixed LIF reservoir as a dynamical system (montage-free, model-supported). (a)~Spike raster (shaded $=$ the $t\in[10,70]$ analysis window). (b)~Population state-space trajectory---the first three principal components of the $256$-unit membrane state---for the three affective conditions; each starts at a marker and settles onto a shared low-dimensional manifold. (c)~Eigenvalue spectrum of the recurrent weight matrix filling the disk of spectral radius $\rho=0.9$ (dashed) within the unit circle, i.e.\ operation at the edge of stability. (d)~Recurrence plot of the state trajectory, exposing its temporal structure.}
+\includegraphics[width=0.76\textwidth]{fig_reservoir_dyn.pdf}
+\caption{The fixed LIF reservoir as a dynamical system (montage-free, model-supported). (a)~Spike raster (shaded $=$ the $t\in[10,70]$ analysis window). (b)~Population state-space trajectory---the first three principal components of the $256$-unit membrane state---for the three affective conditions; each starts at a marker and settles onto a shared low-dimensional manifold. (c)~Eigenvalue spectrum of the recurrent weight matrix filling the disk of spectral radius $\rho=0.9$ (dashed) within the unit circle, i.e.\ operation at the edge of stability. (d)~Edge of chaos: asymptotic state separation grows with spectral radius past the critical $\rho=1$ (dotted); the chosen $\rho=0.9$ (dashed) sits just below.}
 \label{fig:resdyn}
 \end{figure*}
+
 
 
 \subsection{Baselines and Readout}
@@ -119,28 +118,14 @@ Train-only standardization makes the readout invariant to a constant feature off
 
 \section{Experimental Protocol}
 \subsection{Dataset and Task}
-The experiments use a trial-averaged affective ERP dataset with 211 subjects after exclusion of one anomalous subject record. Each subject contributes three affective conditions (negative, neutral, pleasant), yielding 633 subject-condition observations. The ERP traces contain 34 scalp channels downsampled to 256~Hz, with 256 post-stimulus samples per epoch, baseline-corrected relative to onset. Subject-level data are maintained in a restricted research environment; only aggregate, de-identified results are reported. Table~\ref{tab:dataset} summarizes the protocol.
+The experiments use a trial-averaged affective ERP dataset with 211 subjects after exclusion of one anomalous subject record. Each subject contributes three affective conditions (negative, neutral, pleasant), yielding 633 subject-condition observations. The ERP traces contain 34 scalp channels downsampled to 256~Hz, with 256 post-stimulus samples per epoch, baseline-corrected relative to onset; the grand averages show the expected late-positive-potential enhancement for emotional over neutral stimuli (Fig.~\ref{fig:erp}). Subject-level data are maintained in a restricted research environment; only aggregate, de-identified results are reported.
 
-\begin{table}[t]
-\caption{Dataset and evaluation protocol summary.}
-\label{tab:dataset}
+\begin{figure*}[t]
 \centering
-\small
-\begin{tabular}{ll}
-\toprule
-Item & Value \\
-\midrule
-Subjects (after exclusion) & 211 \\
-Observations & 633 (subject $\times$ condition) \\
-Conditions & 3 (neg., neutral, pleasant) \\
-Channels / rate / samples & 34 / 256~Hz / 256 \\
-Band-power (A0) dim. & 170 ($5{\times}34$) \\
-ERP-window (A0$_e$) dim. & 102 ($3{\times}34$) \\
-Reservoir embedding ($E$) dim. & 2176 ($64{\times}34$) \\
-Validation & subject-grouped 5-fold CV \\
-\bottomrule
-\end{tabular}
-\end{table}
+\includegraphics[width=0.8\textwidth]{fig_erp.pdf}
+\caption{Trial-averaged affective ERP data (primary cohort; grand averages over 211 subjects). (a)~Grand-average waveforms per condition at the most affect-discriminative channel; shaded $=$ the late-positive-potential window ($450$--$800$~ms). (b)~Spatiotemporal map of the emotional-minus-neutral difference across all $34$ channels, showing the sustained LPP enhancement. (c)~Global field power per condition.}
+\label{fig:erp}
+\end{figure*}
 
 \subsection{Validation}
 All results are computed under a single protocol: StratifiedGroupKFold (5 folds, seeds $42$--$46$), train-only standardization, and a balanced L2 logistic readout; observations from the same subject never span train and test. We report means with $95\%$ confidence intervals (CIs) over the 25 folds, and macro one-vs-rest AUC from pooled out-of-fold probabilities. Chance is calibrated by a label-permutation null (100 permutations).
@@ -182,11 +167,11 @@ Under \emph{amplitude} noise the accuracy ranking is preserved and degradation i
 
 \emph{Zero-imputation confound.} Zeroing a dropped channel's features and then standardizing maps them to $-\mu/\sigma$, an out-of-distribution value for features with non-zero mean. Train-mean imputation instead maps them to a neutral value and raises the dropout BA of the classical encoders (band-power $0.408\!\to\!0.431$, ERP-window $0.454\!\to\!0.489$ at $30\%$; up to $+0.043$ at $50\%$), while the reservoir---whose PCA embedding is zero-centered---is essentially unchanged ($0.456\!\to\!0.461$). The fixed-encoder dropout ranking therefore \emph{reverses}: zero-imputation ranks the reservoir first ($0.456>0.454>0.408$), but the corrected imputation ranks ERP-window first ($0.489>0.461>0.431$). The reservoir's imputation-invariance is exactly what makes it a useful accuracy-invariant reference, isolating the artifact that affects the other encoders.
 
-\emph{Generality.} The mean-minus-zero gap predicted by Eq.~\eqref{eq:noninv} is $+0.034$ (ERP-window), $+0.023$ (band-power), and only $+0.005$ (reservoir) at $30\%$ dropout: it tracks feature non-centeredness and vanishes for the PCA-centered embedding, as predicted. The effect is not specific to mean imputation or to one dropout rate (Fig.~\ref{fig:impute}). Across $10$--$50\%$ dropout every in-distribution fill (mean, kNN, spatial) raises the non-centered encoders---by up to $0.11$~BA for ERP-window under kNN---while leaving the reservoir within $0.04$~BA of its zero-imputation value. Consequently the reservoir's naive lead does not survive: at $30\%$ dropout ERP-window significantly exceeds the reservoir under kNN ($0.562$ vs.\ $0.491$, $p{=}2\times10^{-5}$) and spatial fills ($0.516$ vs.\ $0.462$, $p{=}10^{-3}$) and matches it under mean imputation ($p{=}0.06$), whereas under zero-imputation the two are statistically tied ($p{=}0.8$).
+\emph{Generality.} The mean-minus-zero gap predicted by Eq.~\eqref{eq:noninv} is $+0.034$ (ERP-window), $+0.023$ (band-power), and only $+0.005$ (reservoir) at $30\%$ dropout---tracking non-centeredness and vanishing for the PCA-centered embedding. It holds across $10$--$50\%$ dropout and every in-distribution fill (mean, kNN, spatial; Fig.~\ref{fig:impute}), raising the non-centered encoders by up to $0.11$~BA while leaving the reservoir within $0.04$~BA of zero-imputation. So the reservoir's naive lead does not survive: at $30\%$ dropout ERP-window significantly exceeds it under kNN ($0.562$ vs.\ $0.491$, $p{=}2{\times}10^{-5}$) and spatial ($p{=}10^{-3}$) fills, matches under mean ($p{=}0.06$), and ties only under zero-imputation ($p{=}0.8$).
 
 \emph{Training confound.} The trained EEGNet's apparent dropout fragility ($0.554$, $78\%$ raw retention) is largely a training choice. Re-training with channel-dropout and amplitude-noise augmentation recovers dropout BA to $0.674$ (from $0.554$; $96\%$ retention) while preserving clean accuracy ($0.703$), so for a trained model robustness is contributed mainly by training rather than by the representation (Fig.~\ref{fig:deapaug}b).
 
-\emph{Other controls.} A dimensionality-matched random projection of band-power (2176-D, five seeds) gives clean BA $0.501\pm0.002$ but collapses to $0.399\pm0.008$ at $5$~dB, tracking band-power rather than the reservoir, so the reservoir's robustness is not a dimensionality effect.
+\emph{Other controls.} A dimensionality-matched random projection of band-power (2176-D) drops to $0.399$ at $5$~dB like band-power, not the reservoir, so robustness is not a dimensionality effect.
 
 \begin{table}[t]
 \caption{Channel dropout at $30\%$: naive vs.\ corrected evaluation. ``Zero''/``Mean'' are zero- and train-mean imputation of dropped channels; raw-ret.\ $=\mathrm{BA}_{\mathrm{zero}}/\mathrm{BA}_{\mathrm{clean}}$ (naive); AC-ret.\ $=$ above-chance retention under mean-imputation (corrected). EEGNet is perturbed at its raw (near-zero-mean) input, so imputation is immaterial; ``+aug.''\ adds train-time augmentation.}
@@ -214,7 +199,7 @@ Reservoir & $0.463$ & $0.456$ & $0.461$ & $99\%$ & $98\%$ \\
 \label{fig:impute}
 \end{figure}
 
-\emph{Input-level check (reservoir).} Recomputing the embedding from corrupted \emph{signals} (perturbation before extraction, as for EEGNet) leaves it stable under amplitude noise and dropout (BA $0.449$, $0.431$ vs.\ $0.465$ clean) but sensitive to temporal jitter ($0.422$ at $\pm50$~ms), consistent with its dependence on input timing.
+\emph{Input-level check.} Recomputing the embedding from corrupted \emph{signals} (as for EEGNet) leaves it stable to amplitude noise and dropout ($0.449$, $0.431$ vs.\ $0.465$ clean) but sensitive to temporal jitter ($0.422$).
 
 \subsection{External Replication on an Independent Affective Dataset}
 \label{sec:deap}
@@ -228,14 +213,12 @@ To test whether the imputation confound is specific to our cohort, we replicate 
 \end{figure}
 
 \section{Discussion}
-Channel-dropout robustness comparisons of EEG representations are dominated by two evaluation choices and, for trained models, by augmentation. Raw retention rewards low-accuracy representations through an accuracy-floor effect; zero-imputation of dropped channels injects out-of-distribution values that penalize non-centered features; and augmentation, not the representation, supplies most of a trained model's dropout robustness. Correcting these factors changes the conclusion: the naive protocol declares the near-chance fixed reservoir the most channel-robust representation, whereas the corrected protocol ranks ERP-window features highest among the fixed encoders and yields an augmented EEGNet that is simultaneously the most accurate and the most channel-robust. The fixed, training-free reservoir is valuable here precisely because it is accuracy- and imputation-invariant: it is a reference that exposes the artifacts affecting the other encoders, not a competitive classifier. A single-bin ablation (BSC$_1$ matches \BSC{}) and a dimensionality-matched random projection further show the reservoir's behavior is driven by the fixed state-space expansion, not by bin granularity or dimensionality.
-
-These findings motivate a minimal reporting protocol for EEG robustness studies: report above-chance retention alongside raw retention; state and vary the channel-imputation rule (zero vs.\ mean or removal); and, for trained models, report robustness with and without augmentation. Each is a one-line change, yet each materially affects the ranking.
+Channel-dropout robustness comparisons are dominated by two evaluation choices and, for trained models, by augmentation: raw retention rewards near-chance representations, zero-imputation injects out-of-distribution values that penalize non-centered features, and augmentation---not the representation---supplies most of a trained model's dropout robustness. Correcting these reverses the conclusion: the naive protocol crowns the near-chance reservoir most channel-robust, whereas the corrected protocol ranks ERP-window features highest among fixed encoders and yields an augmented EEGNet that is both most accurate and most channel-robust. The training-free reservoir is valuable precisely as an accuracy- and imputation-invariant reference that exposes these artifacts, not as a competitor. This motivates a one-line reporting change for EEG robustness studies: report above-chance retention alongside raw retention, state and vary the imputation rule, and report trained-model robustness with and without augmentation.
 
 Several boundaries remain. The primary cohort is a single trial-averaged affective-ERP dataset; the confound, however, follows from a deterministic property of standardized readouts (Eq.~\eqref{eq:noninv}) and held across three imputation rules, five dropout rates, and an independent affective dataset (DEAP), so its generality across datasets, tasks, and montages is demonstrated, though paradigm-matched multi-cohort ERP validation remains valuable. EEGNet is perturbed at its raw input while the fixed-feature comparisons are feature-level, so the cross-family comparison is approximate. Adversarial attacks and montage shifts are future work; graph topology and coupling are out of scope.
 
 \section{Conclusion}
-Channel-dropout robustness rankings of affective-ERP representations are confounded by the accuracy floor, by zero-imputation of dropped channels, and---for trained models---by missing augmentation. Using a fixed, training-free reservoir as an accuracy- and imputation-invariant reference, correcting these confounds reverses the naive ranking, and the confound replicates on the independent DEAP dataset. We recommend reporting above-chance retention, the imputation rule, and the augmentation state in EEG robustness studies. Future work extends the audit to multi-cohort ERP data.
+Channel-dropout robustness rankings of affective-ERP representations are confounded by the accuracy floor, by zero-imputation of dropped channels, and---for trained models---by missing augmentation. Using a fixed, training-free reservoir as an accuracy- and imputation-invariant reference, correcting these confounds reverses the naive ranking, and the confound replicates on the independent DEAP dataset. Future work extends the audit to multi-cohort ERP data.
 
 \textbf{Data Availability.} The primary EEG/ERP data are access-controlled and not redistributed; only aggregate de-identified results are reported. DEAP is public~\cite{koelstra2012deap}. Clinical labels, where present, are context variables only and are not interpreted as diagnostic.
 
