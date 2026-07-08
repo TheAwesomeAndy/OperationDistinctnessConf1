@@ -10,6 +10,14 @@ Target paper:
 
 Submission target: IEEE BIBM 2026 Doctoral Forum route, written as a standard IEEE BIBM proceedings paper.
 
+## Cloud session persistence (read first)
+
+This repo carries the research harness (`scripts/`, `papercheck/`, `harness/`, `.claude/`). Cloud sandboxes are ephemeral: anything not committed and pushed is lost when the session ends.
+
+* The memory journal `harness/memory/memory.jsonl` is the only harness state that accumulates across sessions. It is intentionally tracked in git. **Commit and push it before ending any session**, or lessons/decisions recorded via `scripts/memory.py` are lost.
+* Per-run outputs under `harness/reports/` (papercheck history, generated reports) are git-ignored and do NOT persist. `scripts/self_improve.py` mines that history, so its trend/recurring analysis restarts from empty each cloud session — treat it as within-session only.
+* Run `python3 scripts/memory.py digest` at session start to reload prior knowledge; the papercheck main file is `manuscript/main_bibm2026.tex` (set in `harness/papercheck.toml`).
+
 This repository is for a narrow technical conference paper on LIF reservoir encoding, BSC6 temporal spike-bin representations, subject-level validation, and perturbation characterization for affective EEG/ERP observations.
 
 This is not the full ARSPI-Net journal paper.
