@@ -118,7 +118,7 @@ Train-only standardization makes the readout invariant to a constant feature off
 
 \section{Experimental Protocol}
 \subsection{Dataset and Task}
-The experiments use trial-averaged affective ERP data from the Stress, Health, and the Psychophysiology of Emotion (SHAPE) project, collected by the Laboratory for Clinical Affective Neuroscience at Stony Brook University (\url{lab-can.com}), with 211 subjects after exclusion of one anomalous subject record. Each subject contributes three affective conditions (negative, neutral, pleasant), yielding 633 subject-condition observations. The ERP traces contain 34 scalp channels downsampled to 256~Hz, with 256 post-stimulus samples per epoch, baseline-corrected relative to onset; the grand averages show the expected late-positive-potential enhancement for emotional over neutral stimuli (Fig.~\ref{fig:erp}). Subject-level data are maintained in a restricted research environment; only aggregate, de-identified results are reported.
+The experiments use trial-averaged affective ERP data from the Stress, Health, and the Psychophysiology of Emotion (SHAPE) project~\cite{shape}, collected by the Laboratory for Clinical Affective Neuroscience at Stony Brook University, with 211 subjects after exclusion of one anomalous subject record. Each subject contributes three affective conditions (negative, neutral, pleasant), yielding 633 subject-condition observations. The ERP traces contain 34 scalp channels downsampled to 256~Hz, with 256 post-stimulus samples per epoch, baseline-corrected relative to onset; the grand averages show the expected late-positive-potential enhancement for emotional over neutral stimuli (Fig.~\ref{fig:erp}). Subject-level data are maintained in a restricted research environment; only aggregate, de-identified results are reported.
 
 \begin{figure*}[t]
 \centering
@@ -222,7 +222,7 @@ Channel-dropout robustness rankings of affective-ERP representations are confoun
 
 \textbf{Ethics.} The SHAPE study was collected by the Stony Brook University Laboratory for Clinical Affective Neuroscience under that laboratory's Institutional Review Board oversight. DEAP is a publicly released dataset governed by its original collection protocol~\cite{koelstra2012deap}.
 
-\textbf{Data Availability.} For information on the SHAPE study dataset, contact the Laboratory for Clinical Affective Neuroscience at Stony Brook University (\url{lab-can.com}). DEAP is public~\cite{koelstra2012deap}.
+\textbf{Data Availability.} For information on the SHAPE study dataset, contact the Laboratory for Clinical Affective Neuroscience at Stony Brook University~\cite{shape}. DEAP is public~\cite{koelstra2012deap}.
 
 \begin{thebibliography}{99}
 
@@ -294,6 +294,9 @@ C. Rommel, J. Paillard, T. Moreau, and A. Gramfort, ``Data augmentation for lear
 
 \bibitem{koelstra2012deap}
 S. Koelstra \emph{et al.}, ``DEAP: A database for emotion analysis using physiological signals,'' \emph{IEEE Trans. Affective Computing}, vol. 3, no. 1, pp. 18--31, 2012.
+
+\bibitem{shape}
+Laboratory for Clinical Affective Neuroscience, ``The Stress, Health, and the Psychophysiology of Emotion (SHAPE) project,'' Stony Brook University, Stony Brook, NY, USA. [Online]. Available: \url{https://lab-can.com}
 
 \end{thebibliography}
 
