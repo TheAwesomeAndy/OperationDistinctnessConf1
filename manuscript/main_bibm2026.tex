@@ -32,7 +32,7 @@ Affective electroencephalographic (EEG) event-related potentials (ERPs) are nois
 
 
 \begin{IEEEkeywords}
-EEG, event-related potentials, spiking neural networks, reservoir computing, ARSPI-Net, biomedical signal processing, affective computing, perturbation analysis.
+EEG, event-related potentials, spiking neural networks, reservoir computing, affective computing, perturbation analysis.
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -215,7 +215,7 @@ To test whether the imputation confound is specific to our cohort, we replicate 
 \section{Discussion}
 Channel-dropout robustness comparisons are dominated by two evaluation choices and, for trained models, by augmentation: raw retention rewards near-chance representations, zero-imputation injects out-of-distribution values that penalize non-centered features, and augmentation---not the representation---supplies most of a trained model's dropout robustness. Correcting these reverses the conclusion: the naive protocol crowns the near-chance reservoir most channel-robust, whereas the corrected protocol ranks ERP-window features highest among fixed encoders and yields an augmented EEGNet that is both most accurate and most channel-robust. The training-free reservoir is valuable precisely as an accuracy- and imputation-invariant reference that exposes these artifacts, not as a competitor. This motivates a one-line reporting change for EEG robustness studies: report above-chance retention alongside raw retention, state and vary the imputation rule, and report trained-model robustness with and without augmentation.
 
-Several boundaries remain. The primary cohort is a single trial-averaged affective-ERP dataset; the confound, however, follows from a deterministic property of standardized readouts (Eq.~\eqref{eq:noninv}) and held across three imputation rules, five dropout rates, and an independent affective dataset (DEAP), so its generality across datasets, tasks, and montages is demonstrated, though paradigm-matched multi-cohort ERP validation remains valuable. EEGNet is perturbed at its raw input while the fixed-feature comparisons are feature-level, so the cross-family comparison is approximate. Adversarial attacks and montage shifts are future work; graph topology and coupling are out of scope.
+\textbf{Limitations.} Several boundaries remain. The primary cohort is a single trial-averaged affective-ERP dataset; the confound, however, follows from a deterministic property of standardized readouts (Eq.~\eqref{eq:noninv}) and held across three imputation rules, five dropout rates, and an independent affective dataset (DEAP), so its generality across datasets, tasks, and montages is demonstrated, though paradigm-matched multi-cohort ERP validation remains valuable. EEGNet is perturbed at its raw input while the fixed-feature comparisons are feature-level, so the cross-family comparison is approximate. Adversarial attacks and montage shifts are future work; graph topology and coupling are out of scope.
 
 \section{Conclusion}
 Channel-dropout robustness rankings of affective-ERP representations are confounded by the accuracy floor, by zero-imputation of dropped channels, and---for trained models---by missing augmentation. Using a fixed, training-free reservoir as an accuracy- and imputation-invariant reference, correcting these confounds reverses the naive ranking, and the confound replicates on the independent DEAP dataset. Future work extends the audit to multi-cohort ERP data.
@@ -280,12 +280,6 @@ F. Del Pup, A. Zanola, L. F. Tshimanga, A. Bertoldo, and M. Atzori, ``The more, 
 
 \bibitem{kornblith2019similarity}
 S. Kornblith, M. Norouzi, H. Lee, and G. Hinton, ``Similarity of neural network representations revisited,'' in \emph{Proc. Int. Conf. Machine Learning}, 2019, pp. 3519--3529.
-
-\bibitem{davies2018loihi}
-M. Davies \emph{et al.}, ``Loihi: A neuromorphic manycore processor with on-chip learning,'' \emph{IEEE Micro}, vol. 38, no. 1, pp. 82--99, 2018.
-
-\bibitem{furber2014spinnaker}
-S. B. Furber, F. Galluppi, S. Temple, and L. A. Plana, ``The SpiNNaker project,'' \emph{Proceedings of the IEEE}, vol. 102, no. 5, pp. 652--665, 2014.
 
 \bibitem{sirca2026beyond}
 U. \v{S}irca, M. Alimardani, S. Zafeiriou, and K. Barmpas, ``Beyond accuracy: Robustness, interpretability and expressiveness of EEG foundation models,'' \emph{arXiv:2605.17562}, 2026.
