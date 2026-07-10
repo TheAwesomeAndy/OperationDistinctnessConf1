@@ -87,10 +87,14 @@ Post-onset activity is summarized by six equal temporal bins over the window $t\
 \begin{equation}\label{eq:operator}
 E=\phi_{\mathrm{PCA}}\!\big([b_1,\dots,b_6]\big)=\Phi(X),
 \end{equation}
-so $E=\Phi(X)$ is a fixed, label-free representation. The PCA basis is fitted once, unsupervised, over spike-bin vectors pooled across all subjects, hence transductive with respect to subject inclusion (bounded by the fold-local control in Sec.~\ref{sec:clean}). A single-bin control (BSC$_1$, total post-onset spike count) uses the identical pipeline. The $t\in[10,70]$ window is early and compact, excluding the later P300/LPP ranges the ERP-window baseline sees, so the clean comparison is conservative for the reservoir.
+so $E=\Phi(X)$ is a fixed, label-free representation. The PCA basis is fitted once, unsupervised, over spike-bin vectors pooled across all subjects, hence transductive with respect to subject inclusion (bounded by the fold-local control in Sec.~\ref{sec:clean}). A single-bin control (BSC$_1$, total post-onset spike count) uses the identical pipeline. The $t\in[10,70]$ window is early and compact, excluding the later P300/LPP ranges the ERP-window baseline sees, so the clean comparison is conservative for the reservoir (Fig.~\ref{fig:resdyn}).
 
-
-
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_reservoir_dyn.pdf}
+\caption{The fixed LIF reservoir as a dynamical system. (a)~Spike raster for one condition (shaded $=$ the $t\in[10,70]$ analysis window). (b)~Population state-space trajectory (first three principal components of the $256$-unit membrane state), colored by time, for the three affective conditions; each trajectory settles onto a shared low-dimensional manifold. (c)~Eigenvalue spectrum of the recurrent weight matrix, filling the disk of spectral radius $\rho=0.9$ (dashed) inside the unit circle. (d)~Asymptotic state separation as a function of spectral radius; the chosen $\rho=0.9$ (dashed) sits below the $\rho=1$ line (dotted).}
+\label{fig:resdyn}
+\end{figure*}
 
 \subsection{Baselines and Readout}
 Two classical baselines are evaluated under the same subject-grouped protocol. The band-power baseline (A0) uses spectral band-power features ($5$ bands $\times$ $34$ channels $=170$ dimensions). The ERP-window baseline (A0$_e$) uses mean amplitude in three post-stimulus windows, early ($80$--$200$~ms), P300 ($250$--$450$~ms), and late positive potential ($450$--$800$~ms), per channel ($3 \times 34 = 102$ dimensions). To separate representational robustness from raw dimensionality, we add a dimensionality-matched control: A0 randomly projected to $2176$ dimensions (Gaussian random projection, averaged over five random seeds). The band-power, ERP-window, and reservoir representations use a balanced L2-regularized logistic readout to test separability without a high-capacity classifier.
@@ -106,11 +110,16 @@ We report two robustness summaries. \emph{Raw retention} is the ratio of perturb
 
 Channel dropout also requires a fill rule for the dropped channel's features. The common zero-fill convention is not neutral after train-only standardization: a zero-valued feature becomes $-\mu/\sigma$, which can be out of distribution for non-centered features. Train-mean imputation maps the dropped feature to the standardized origin. We compare zero-fill with train-mean imputation, then add two in-distribution checks: train-fitted $k$-nearest-neighbor imputation ($k{=}10$) and a within-sample spatial fill using the mean of retained channels. For EEGNet, perturbations are applied to the raw input, and an augmented training condition is evaluated separately.
 
-\emph{Non-invariance of zero-imputation robustness.} The zero-imputation artifact follows directly from standardization. For a feature with training mean $\mu$ and standard deviation $\sigma$, an imputed value $v$ enters the readout as $(v-\mu)/\sigma$, so zero- and mean-imputation differ by a fixed shift,
+\emph{Non-invariance of zero-fill robustness.} Write the standardized readout input as $z=D_\sigma^{-1}(x-\mu)$ with $D_\sigma=\operatorname{diag}(\sigma)$, and let $S$ index the dropped coordinates. Zero-fill sets $x_S=0$, so the dropped block enters as $z_S=-D_{\sigma,S}^{-1}\mu_S$; train-mean fill sets $x_S=\mu_S$, so $z_S=0$. The two fills therefore differ by a fixed shift,
 \begin{equation}\label{eq:noninv}
-\frac{0-\mu}{\sigma}-\frac{\mu-\mu}{\sigma}=-\frac{\mu}{\sigma}.
+z_S^{\mathrm{zero}}-z_S^{\mathrm{mean}}=-D_{\sigma,S}^{-1}\mu_S .
 \end{equation}
-Train-only standardization leaves clean readout performance unchanged under a constant re-centering of the representation, but the zero-imputation response shifts by $b/\sigma$ after $x\mapsto x-b$. Thus zero-imputation robustness is not invariant to an information-preserving re-centering. The effect is minimized when $\mu\approx0$, which is why a mean-centered embedding such as PCA provides a useful reference point for the imputation analysis.
+
+\noindent\textbf{Proposition 1.} \emph{Let the clean readout depend on $x$ only through $z$, so it is invariant to a constant offset $x\mapsto x-b$ (train-only standardization guarantees this). Then the clean prediction is unchanged by the re-centering, while the zero-fill dropout input shifts by $\Delta z_S=D_{\sigma,S}^{-1}b_S$. Hence the measured zero-fill dropout accuracy is not a function of the information in $x$ alone; it depends on the coordinate origin, and it is invariant to the fill rule only when $\mu_S=0$.}
+
+\noindent\emph{Proof.} Standardization subtracts the training mean, so the constant $b$ cancels from the clean input and clean accuracy is unchanged. Under the re-centering, a dropped coordinate zero-filled to $x_i=0$ maps to $z_i=-(\mu_i-b_i)/\sigma_i$, which differs from the original $-\mu_i/\sigma_i$ by $b_i/\sigma_i$. This shift is nonzero for some admissible $b$ unless $\sigma_i^{-1}=0$, and zero- and mean-fill coincide exactly when $\mu_i=0$ for all $i\in S$. $\qquad\square$
+
+For a linear readout with weights $w$, Eq.~\eqref{eq:noninv} changes the dropped-block contribution to the logit by $\sum_{i\in S} w_i\mu_i/\sigma_i$ between the two fills, so the measured gap scales with the non-centeredness $\lVert D_{\sigma,S}^{-1}\mu_S\rVert$ of the dropped features. A mean-centered embedding ($\mu=0$), such as the pooled-PCA reservoir code, is the unique fixed point of the fill rule and is why it serves as a coordinate-independent reference. The bound predicts the subject-level gaps in Sec.~\ref{sec:perturb}: $+0.042$ for ERP-window, $+0.025$ for band-power, and $\approx 0$ for the centered reservoir.
 
 \section{Experimental Protocol}
 \subsection{Dataset and Task}
@@ -216,7 +225,7 @@ $50\%$ & $0.450$ & $0.474$ & $0.395$ \\
 
 \subsection{External Replication on an Independent Affective Dataset}
 \label{sec:deap}
-We next test whether the imputation effect is specific to SHAPE. On DEAP~\cite{koelstra2012deap}, an independent affective EEG dataset with 32 subjects and 40 trials per subject, we evaluate band-power features on a binary valence task using the standard within-subject protocol (per-subject stratified $5$-fold; DEAP band-power is at chance cross-subject). The same pattern appears, and the magnitude is larger than in SHAPE (Fig.~\ref{fig:deapaug}a). At $30\%$ dropout, band-power scores BA $0.540$ under zero-imputation but $0.621$--$0.638$ under mean or $k$NN imputation. With clean BA $0.639$, zero-imputation indicates a $0.10$ BA loss, whereas $k$NN imputation indicates almost no loss. Thus, for the same features on a second dataset, task, and montage, the imputation convention alone moves measured channel-dropout robustness by up to $0.11$ BA.
+We next test whether the effect is specific to SHAPE. On DEAP~\cite{koelstra2012deap} (32 subjects, band-power features, binary valence, within-subject $5$-fold), the same pattern appears and is larger (Fig.~\ref{fig:deapaug}a): at $30\%$ dropout the same features score BA $0.540$ under zero-fill but $0.621$--$0.638$ under mean or $k$NN. With clean BA $0.639$, the fill rule alone moves measured accuracy under dropout by up to $0.11$ BA, on a second dataset, task, and montage. We report this as external validation of the fill-rule effect, not as a replication of the full comparison.
 
 \begin{figure}[t]
 \centering
@@ -228,7 +237,7 @@ We next test whether the imputation effect is specific to SHAPE. On DEAP~\cite{k
 \section{Discussion}
 The main result is methodological. Channel-dropout robustness estimates change under two common reporting choices: raw retention can favor models close to the chance floor, and zero-imputation can penalize non-centered features after standardization. For trained models, augmentation is a third factor. After accounting for these choices, the fixed reservoir should not be described as the most channel-robust encoder. Under paired subject-level inference, ERP-window features are significantly the strongest fixed encoder under every in-distribution fill and are within noise of the reservoir only under zero-fill, and the augmented EEGNet is the most accurate baseline under channel loss. The reservoir remains useful as a fixed reference because its centered embedding changes little across fill rules, which makes the effect in the other encoders visible. That invariance is specific to the feature space: when electrodes are removed at the signal level, the reservoir degrades like the other encoders, so it should not be read as robustness to missing channels.
 
-These results suggest a minimal reporting standard for EEG robustness studies: report above-chance retention in addition to raw retention, state the channel-fill rule, test at least one in-distribution fill, and report trained-model results with and without perturbation augmentation. None of these additions require a new model, but each changes how the comparison is interpreted.
+These results suggest a minimal reporting standard: report absolute accuracy with subject-level uncertainty, state and vary the channel-fill rule, and report trained-model results with and without augmentation. None of these require a new model, yet each can change the comparison.
 
 \textbf{Limitations.} The primary cohort is a single trial-averaged affective-ERP dataset. The imputation effect follows from the standardization algebra in Eq.~\eqref{eq:noninv} and is observed across three fill rules, five dropout rates, and the independent DEAP check, but paradigm-matched multi-cohort ERP validation would still strengthen the claim. The signal-level experiment recomputes every fixed encoder under matched channel removal; EEGNet is reported from per-fold estimates rather than the subject-level bootstrap, so its comparison to the fixed encoders is approximate. Adversarial attacks and montage shifts are not evaluated here. Graph topology and structure--function coupling are outside the scope of this paper.
 
