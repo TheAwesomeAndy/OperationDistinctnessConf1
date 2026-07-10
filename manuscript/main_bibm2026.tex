@@ -15,7 +15,7 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\Ind}{\mathbf{1}}
 
-\title{A Spiking-Reservoir Reference for Channel-Missingness Evaluation in Affective EEG}
+\title{On the Edge of Stability: Spiking-Reservoir State-Space Encoding of Affective EEG}
 
 \author{
 \IEEEauthorblockN{Andrew A. Lane\IEEEauthorrefmark{1}, Wendy Tang\IEEEauthorrefmark{1}, and Brady D. Nelson\IEEEauthorrefmark{2}}
@@ -187,8 +187,8 @@ Spatial & $0.479$ & $0.589$ & $0.493$ & $+0.10$ [$+0.06,+0.14$] \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_impute.pdf}
-\caption{Channel-dropout performance under different imputation rules. (a)~Dropout-rate curves under zero (dashed) and kNN (solid) imputation. The reservoir's centered embedding changes little across fills, whereas ERP-window and band-power features improve under in-distribution fills. (b)~At $30\%$ dropout, zero, mean, kNN, and spatial fills move the non-centered encoders by $0.05$--$0.11$~BA, while the reservoir changes only modestly. Dashed line = chance.}
+\includegraphics[width=\columnwidth]{fig_impute_subj.pdf}
+\caption{Subject-level channel-dropout results (feature-coordinate experiment). (a)~Balanced accuracy versus channels removed, under $k$NN fill (solid) and zero fill (dashed). The centered reservoir is nearly flat across fills, whereas ERP-window and band-power gain from the in-distribution fill; $k$NN-filled ERP-window leads at every rate. (b)~Paired subject-level difference ERP-window minus reservoir at $30\%$ dropout, with $95\%$ CIs. The difference is within noise under zero fill and its CI excludes zero under every in-distribution fill, the inference behind Proposition~1.}
 \label{fig:impute}
 \end{figure}
 
