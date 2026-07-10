@@ -36,20 +36,13 @@ EEG, event-related potentials, spiking neural networks, reservoir computing, aff
 \end{IEEEkeywords}
 
 \section{Introduction}
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{fig_pipeline_bsc6_audit.png}
-\caption{Reservoir encoding and perturbation-evaluation pipeline. Trial-averaged affective EEG/ERP observations are mapped through a fixed LIF reservoir, summarized by six temporal spike-count bins (\BSC{}), compressed for linear readout, and evaluated under amplitude noise, temporal jitter, and channel-dropout perturbations.}
-\label{fig:pipeline}
-\end{figure*}
-
 Electroencephalographic event-related potentials (ERPs) provide millisecond-scale measurements of neural response dynamics, but the recorded waveform is a noisy, low-dimensional, and subject-dependent projection of an unobserved neural process \cite{makeig2002dynamic,blankertz2011singletrial}. Inter-subject variability, trial averaging, volume conduction, and measurement noise can make clean-split accuracy difficult to interpret. A representation may separate affective conditions under one protocol while preserving little usable structure after amplitude noise, temporal misalignment, or channel loss.
 
 Endpoint accuracy alone also says little about what a representation preserves. This issue is especially relevant for spiking encodings. Fixed recurrent reservoirs and spiking networks provide nonlinear temporal expansions \cite{maass2002real,lukosevicius2009reservoir}, but EEG/ERP studies often treat them primarily as classifiers \cite{gong2023sglnet,craik2019deep}. In that setting, the reservoir's discrete spike-count features are not usually examined as perturbation-sensitive temporal measurements tied to post-stimulus windows.
 
 The perturbation behavior of affective-ERP reservoir encodings remains underreported, even though preprocessing, acquisition, and electrode-loss choices can materially change EEG representation performance \cite{delpup2025preprocessing,chiang2023depression,guo2025mma}.
 
-This paper evaluates whether channel-dropout robustness rankings for affective-ERP representations are stable under reasonable changes to the scoring protocol. We compare spectral band-power, ERP-window amplitudes, a fixed leaky integrate-and-fire (LIF) reservoir summarized by six post-onset spike-count bins (\BSC{}) and compressed for a linear readout, and a trained EEGNet (Fig.~\ref{fig:pipeline}). The reservoir is not treated as a proposed winner; it is used as a fixed reference whose embedding is nearly zero-centered and whose dynamics are not retrained under perturbation. The contributions are:
+This paper evaluates whether channel-dropout robustness rankings for affective-ERP representations are stable under reasonable changes to the scoring protocol. We compare spectral band-power, ERP-window amplitudes, a fixed leaky integrate-and-fire (LIF) reservoir summarized by six post-onset spike-count bins (\BSC{}) and compressed for a linear readout, and a trained EEGNet. The reservoir is not treated as a proposed winner; it is used as a fixed reference whose embedding is nearly zero-centered and whose dynamics are not retrained under perturbation. The contributions are:
 \begin{enumerate}
     \item A subject-grouped comparison of affective-ERP representations under amplitude noise and channel dropout, with uncertainty and encoder contrasts estimated by a subject-level bootstrap rather than by treating folds as independent (Sec.~\ref{sec:clean}, Tables~\ref{tab:clean}--\ref{tab:dropconf}).
     \item Quantification of two protocol artifacts in channel-dropout evaluation: raw-retention inflation near the chance floor, and zero-imputation bias for non-centered features. The imputation effect is also tested on DEAP (Secs.~\ref{sec:confound}, \ref{sec:perturb}, \ref{sec:deap}).
@@ -59,21 +52,21 @@ This paper evaluates whether channel-dropout robustness rankings for affective-E
 Clinical labels and affective categories define the task structure; the representations and their perturbation behavior are the object of study.
 
 \section{Related Work}
-ERP/EEG analysis commonly uses time-window amplitudes and latencies, Hjorth \cite{hjorth1970eeg} and wavelet/spectral descriptors \cite{subasi2007eeg}, and linear models \cite{blankertz2011singletrial}. These features remain attractive because they are interpretable in relation to known ERP components, including the P300 and late positive potential \cite{makeig2002dynamic}, but they can miss nonlinear temporal interactions. Reservoir computing offers a complementary approach: a high-dimensional recurrent dynamical system maps the input to a state trajectory that can be read out by a simple classifier \cite{maass2002real,jaeger2001echo,jaeger2004harnessing,lukosevicius2009reservoir}. Spiking liquid-state machines add event-based timing and count structure \cite{diehl2015unsupervised,roy2019towards}. When the recurrent dynamics are fixed, the reservoir can be analyzed as a measurement operator rather than only as a classifier.
+ERP/EEG analysis commonly uses time-window amplitudes and latencies, Hjorth \cite{hjorth1970eeg} and wavelet/spectral descriptors \cite{subasi2007eeg}, and linear models \cite{blankertz2011singletrial}, which are interpretable in relation to known ERP components such as the P300 and late positive potential \cite{makeig2002dynamic} but can miss nonlinear temporal structure. Reservoir computing offers a complementary view: a fixed high-dimensional recurrent system maps the input to a state trajectory read out by a simple classifier \cite{maass2002real,jaeger2001echo,jaeger2004harnessing,lukosevicius2009reservoir}, and spiking liquid-state machines add event-based timing and count structure \cite{diehl2015unsupervised,roy2019towards}. With fixed dynamics, the reservoir acts as a measurement operator rather than a classifier.
 
 Spiking and deep networks are now widely applied to EEG \cite{gong2023sglnet,lawhern2018eegnet,craik2019deep}. Much of this literature still emphasizes endpoint accuracy, while preprocessing and acquisition choices receive less systematic treatment \cite{delpup2025preprocessing,kornblith2019similarity}. Neuromorphic reservoir features for affective EEG were introduced in prior ARSPI-Net work \cite{lane2023arspi,lane2024arspi}; here we establish their perturbation and invariance properties and identify two scoring artifacts that distort robustness comparisons.
 
-Robustness to noise, artifacts, and electrode loss is increasingly studied. Dynamic spatial filtering addresses missing or corrupted channels with a learned channel-attention front end \cite{banville2022dsf}, and channel-dropout or amplitude-noise augmentation are standard ways to harden trained models \cite{rommel2022augment}. A recent EEG foundation-model benchmark reports that no single model is most robust to all perturbations and that apparent channel-dropout fragility can depend on whether dropped channels are removed or zero-padded \cite{sirca2026beyond}. We build on that methodological point by separating two scoring effects: raw-retention inflation for low-accuracy representations and zero-imputation bias for non-centered fixed features. The fixed reservoir is used as a reference case for this analysis because it is training-free and nearly invariant to the imputation rule.
+Robustness to noise, artifacts, and electrode loss is increasingly studied. Dynamic spatial filtering handles missing channels with a learned attention front end \cite{banville2022dsf}, and channel-dropout or amplitude-noise augmentation hardens trained models \cite{rommel2022augment}. A recent EEG foundation-model benchmark finds that apparent channel-dropout fragility can depend on whether dropped channels are removed or zero-padded \cite{sirca2026beyond}. We build on that point by separating two scoring effects, raw-retention inflation and zero-fill bias, and using the training-free reservoir as a coordinate-independent reference.
 
 \section{Methods}
 \label{sec:methods}
 \subsection{ERP Observation Model}
-Let $X_s^{(c)}\in\R^{C\times T}$ denote the trial-averaged ERP observation for subject $s$ and affective condition $c$, with $C$ electrodes (channels) and $T$ temporal samples; observations are stored as $T\times C$ arrays and transposed before encoding. We treat $X_s^{(c)}$ as a noisy observation of an unobserved neural state trajectory:
+Let $X_s^{(c)}\in\R^{C\times T}$ denote the trial-averaged ERP observation for subject $s$ and condition $c$ ($C=34$ channels, $T=256$ samples). We treat it as a noisy readout of an unobserved neural state trajectory,
 \begin{equation}\label{eq:obs}
     \xi_{t+1}=f_\theta(\xi_t,u_t)+\eta_t,\qquad
     x_t=H\xi_t+\epsilon_t,
 \end{equation}
-where $\xi_t$ is the latent neural state, $H$ is a measurement operator induced by scalp observation, and $\epsilon_t$ captures measurement and preprocessing noise. The perturbations below are applied to this observation model (Sec.~\ref{sec:perturb}).
+where $H$ is the scalp measurement operator and $\epsilon_t$ is measurement and preprocessing noise. The perturbations below act on this model (Sec.~\ref{sec:perturb}).
 
 \subsection{Spiking Reservoir Encoding}
 For each electrode trace, the signal is passed through a fixed LIF reservoir of $256$ neurons with recurrent weights $W$ scaled to spectral radius $\rho=0.9$, a conventional subcritical reservoir setting, input weights $W_{\mathrm{in}}$, leak parameter $\beta=0.05$, and firing threshold $\vartheta$. A compact discrete-time representation is
@@ -81,7 +74,7 @@ For each electrode trace, the signal is passed through a fixed LIF reservoir of 
     v_{t+1} &= \beta v_t + W z_t + W_{\mathrm{in}}x_t - \vartheta r_t, \\
     z_{t+1} &= \Ind[v_{t+1}\geq \vartheta],
 \end{align}
-where $v_t$ is the membrane state, $z_t$ is the binary spike vector, and $r_t$ denotes reset after threshold crossing. The reservoir is fixed during feature extraction; only the downstream readout is trained.
+where $v_t$ is the membrane potential and $z_t$ the binary spike vector; on each spike the potential is reset by subtracting $\vartheta$ and floored at zero ($r_t$). The weights $W_{\mathrm{in}}$ and $W$ are drawn once from a fixed Xavier-uniform law (seed $42$), $W$ is rescaled to $\rho=0.9$, and $\vartheta=0.5$. The reservoir is fixed during extraction; only the readout is trained.
 
 Post-onset activity is summarized by six equal temporal bins over the window $t\in[10,70]$ in sample units, which at $256$~Hz spans approximately $39$--$273$~ms post-stimulus. For reservoir unit $j$ and bin $k$, the binned spike-count code is $b_{j,k}=\sum_{t\in\mathcal{B}_k} z_j(t)$, $k=1,\ldots,6$. Per-electrode spike-bin features are compressed to $64$ principal components and concatenated across the $34$ channels into a trial-level reservoir representation $E_s^{(c)}\in\R^{2176}$. Writing $s_t=z_t\in\{0,1\}^{N}$ for the reservoir spike state, the encoding is a fixed composition of a nonlinear temporal map, spike-count binning, and the unsupervised projection:
 \begin{equation}\label{eq:operator}
